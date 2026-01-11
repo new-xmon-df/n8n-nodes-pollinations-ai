@@ -1,5 +1,5 @@
 {
-	"name": "n8n-nodes-pollinations",
+	"name": "n8n-nodes-pollinations-ai",
 	"version": "0.1.0",
 	"description": "n8n community node to generate images using Pollinations AI",
 	"keywords": [
