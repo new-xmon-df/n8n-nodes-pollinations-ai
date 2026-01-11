@@ -1,4 +1,4 @@
-# n8n-nodes-pollinations
+# n8n-nodes-pollinations-ai
 
 This is an n8n community node that lets you generate images using [Pollinations AI](https://pollinations.ai) in your n8n workflows.
 
@@ -14,7 +14,7 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 1. Go to **Settings > Community Nodes**
 2. Select **Install**
-3. Enter `n8n-nodes-pollinations` and confirm
+3. Enter `n8n-nodes-pollinations-ai` and confirm
 
 ## Operations
 
@@ -91,7 +91,7 @@ The output will be a binary image that you can:
 
 - [Pollinations API Documentation](https://enter.pollinations.ai/api/docs)
 - [n8n Community Nodes Documentation](https://docs.n8n.io/integrations/community-nodes/)
-- [Report Issues](https://github.com/tu-usuario/n8n-nodes-pollinations/issues)
+- [Report Issues](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/issues)
 
 ## License
 

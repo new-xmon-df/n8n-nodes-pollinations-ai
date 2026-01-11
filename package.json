@@ -11,14 +11,14 @@
 		"flux"
 	],
 	"license": "MIT",
-	"homepage": "https://github.com/new-xmon-df/n8n-nodes-pollinations",
+	"homepage": "https://github.com/new-xmon-df/n8n-nodes-pollinations-ai",
 	"author": {
 		"name": "Juanjo García",
 		"email": "juanjogarciae@gmail.com"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/new-xmon-df/n8n-nodes-pollinations.git"
+		"url": "git+https://github.com/new-xmon-df/n8n-nodes-pollinations-ai.git"
 	},
 	"engines": {
 		"node": ">=18.0.0"
