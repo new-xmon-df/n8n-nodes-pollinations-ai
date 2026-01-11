@@ -1,0 +1,22 @@
+{
+	"node": "n8n-nodes-pollinations.pollinations",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["AI"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://enter.pollinations.ai/api/docs"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://enter.pollinations.ai/api/docs"
+			}
+		]
+	},
+	"alias": ["image", "ai", "generation", "flux", "art"],
+	"subcategories": {
+		"AI": ["Image"]
+	}
+}
