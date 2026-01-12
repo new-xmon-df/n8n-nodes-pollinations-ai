@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.0.0...1.1.0) (2026-01-12)
+
+### ✨ Features
+
+* **chat:** add Pollinations Chat Model sub-node for AI Agent integration ([c7ff63d](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/c7ff63def03bb5e6d45abba2c172ff1ad7730f5a))
+* **models:** add pricing info and fix image auth ([de30b17](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/de30b1721be195a67f8e06484e1547c9a14bc978))
+* **models:** filter models by API key permissions ([0d33497](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/0d3349724a4edc7cb36d1327942af2e89c711903))
+* **text:** add Generate Text operation with dynamic model loading ([22ab5c2](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/22ab5c2ffe899b80dff2555b3f050f77c3c57a19))
+
+### 🐛 Bug Fixes
+
+* **codex:** use valid category for community nodes ([7b7644c](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/7b7644ca7ce73f66a487036dd391538c82d7867c))
+* **icon:** expand viewBox to accommodate drop-shadow ([584c892](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/584c89241409b97e9352d4b2f1a09396df6038be))
+* **icon:** simplify SVG by removing drop-shadow filter ([f809d7f](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/f809d7fa438e78c2fdda5ff3414e37ea2089608d))
+* **image:** use correct gen.pollinations.ai endpoint ([d8fc882](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/d8fc8824524f3dba472081878dccf7e21198e6a2))
+* **node:** add Text subcategory and aliases for AI nodes listing ([db2887c](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/db2887c7d8d58a249043eb3034c7e0c39c71df8a))
+* **text:** add authentication header and move JSON Response to basic fields ([cb01ee8](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/cb01ee8fe48e33181ccfc35f8fc35c218af419bc))
+
+### ♻️ Refactoring
+
+* **models:** show responses per dollar instead of cost per token ([552531e](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/552531e197722741e4a7bcbbb58bc334a1562607))
+* **text:** move JSON Response to advanced options and update docs ([39fa7af](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/39fa7af2e366452677e2971586c4ad86078c622b))
+
+### 👷 CI/CD
+
+* enable npm publish in semantic-release ([e99ed89](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/e99ed8984df0e52f4fcfdaf4fc996c6e60929c38))
+
 ## 1.0.0 (2026-01-11)
 
 ### ✨ Features
