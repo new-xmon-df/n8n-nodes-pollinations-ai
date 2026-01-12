@@ -442,7 +442,7 @@ export class Pollinations implements INodeType {
 				}
 
 				// Build the URL
-				const baseUrl = 'https://image.pollinations.ai/prompt';
+				const baseUrl = 'https://gen.pollinations.ai/image';
 				const encodedPrompt = encodeURIComponent(prompt);
 				const queryString = new URLSearchParams(queryParams).toString();
 				const fullUrl = `${baseUrl}/${encodedPrompt}?${queryString}`;
