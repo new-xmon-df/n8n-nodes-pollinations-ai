@@ -1,8 +1,8 @@
 # n8n-nodes-pollinations-ai
 
-This is an n8n community node that lets you generate images using [Pollinations AI](https://pollinations.ai) in your n8n workflows.
+This is an n8n community node that lets you generate images and text using [Pollinations AI](https://pollinations.ai) in your n8n workflows.
 
-[Pollinations](https://pollinations.ai) is an AI image generation platform that provides access to various models like Flux, Turbo, GPT Image, and more.
+[Pollinations](https://pollinations.ai) is an AI platform that provides access to various image and text generation models.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
@@ -27,7 +27,7 @@ Generate an image from a text prompt using Pollinations AI.
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | Prompt | Yes | The text prompt to generate the image from |
-| Model | Yes | The model to use (Flux, Turbo, GPT Image, etc.) |
+| Model | Yes | The model to use (loaded dynamically from API) |
 
 **Advanced Options:**
 
@@ -39,6 +39,26 @@ Generate an image from a text prompt using Pollinations AI.
 | No Logo | false | Remove the Pollinations watermark |
 | Enhance Prompt | false | Automatically enhance the prompt |
 | Safe Mode | false | Enable content safety filter |
+
+### Generate Text
+
+Generate text from a prompt using AI language models.
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| Prompt | Yes | The text prompt or question for the AI model |
+| Model | Yes | The AI model to use (loaded dynamically from API) |
+| System Prompt | No | Instructions that define the AI behavior and context |
+| Temperature | No | Controls creativity: 0.0 = strict, 2.0 = very creative (default: 0.7) |
+
+**Advanced Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| JSON Response | false | Force the response in JSON format (not supported by all models) |
+| Seed | -1 | Seed for reproducible results (-1 = random) |
 
 ## Credentials
 
@@ -56,31 +76,44 @@ To use this node, you need a Pollinations API key:
 
 ## Available Models
 
-| Model | Description |
-|-------|-------------|
-| Flux | High quality image generation (default) |
-| Turbo | Faster generation with good quality |
-| GPT Image | OpenAI DALL-E style generation |
-| Kontext | Context-aware image generation |
-| Seedream | Dream-like artistic images |
-| Nanobanana | Lightweight fast model |
-| Nanobanana Pro | Enhanced nanobanana model |
+Models are loaded dynamically from the Pollinations API, ensuring you always have access to the latest available models.
+
+### Image Models
+
+Common models include Flux, Turbo, GPT Image, Kontext, Seedream, and more.
+
+### Text Models
+
+Common models include OpenAI GPT-5, Claude, Gemini, DeepSeek, Mistral, and more.
 
 ## Example Usage
 
 ### Basic Image Generation
 
 1. Add a **Pollinations** node to your workflow
-2. Select your Pollinations API credentials
-3. Enter a prompt like "A beautiful sunset over mountains"
-4. Select a model (e.g., Flux)
-5. Execute the node
+2. Select **Generate Image** operation
+3. Select your Pollinations API credentials
+4. Enter a prompt like "A beautiful sunset over mountains"
+5. Select a model (e.g., Flux)
+6. Execute the node
 
 The output will be a binary image that you can:
 - Save to disk using the **Write Binary File** node
 - Upload to cloud storage (S3, Google Drive, etc.)
 - Send via email or messaging platforms
 - Process with other image manipulation nodes
+
+### Basic Text Generation
+
+1. Add a **Pollinations** node to your workflow
+2. Select **Generate Text** operation
+3. Select your Pollinations API credentials
+4. Enter a prompt like "Explain quantum computing in simple terms"
+5. Optionally add a system prompt to define AI behavior
+6. Select a model (e.g., OpenAI)
+7. Execute the node
+
+The output will be a JSON object with the generated text and metadata.
 
 ## Compatibility
 

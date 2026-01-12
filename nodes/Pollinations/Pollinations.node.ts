@@ -228,20 +228,6 @@ export class Pollinations implements INodeType {
 				},
 			},
 
-			// JSON Response (Text)
-			{
-				displayName: 'JSON Response',
-				name: 'jsonMode',
-				type: 'boolean',
-				default: false,
-				displayOptions: {
-					show: {
-						operation: ['generateText'],
-					},
-				},
-				description: 'Whether to force the response in JSON format',
-			},
-
 			// Advanced Options (Text)
 			{
 				displayName: 'Options',
@@ -255,6 +241,14 @@ export class Pollinations implements INodeType {
 					},
 				},
 				options: [
+					{
+						displayName: 'JSON Response',
+						name: 'jsonMode',
+						type: 'boolean',
+						default: false,
+						description:
+							'Whether to force the response in JSON format. Not supported by all models.',
+					},
 					{
 						displayName: 'Seed',
 						name: 'seed',
@@ -454,10 +448,11 @@ export class Pollinations implements INodeType {
 				const model = this.getNodeParameter('textModel', i) as string;
 				const systemPrompt = this.getNodeParameter('systemPrompt', i, '') as string;
 				const temperature = this.getNodeParameter('temperature', i) as number;
-				const jsonMode = this.getNodeParameter('jsonMode', i, false) as boolean;
 				const textOptions = this.getNodeParameter('textOptions', i, {}) as {
+					jsonMode?: boolean;
 					seed?: number;
 				};
+				const jsonMode = textOptions.jsonMode || false;
 
 				// Get credentials
 				const credentials = await this.getCredentials('pollinationsApi');
