@@ -71,7 +71,7 @@ export class Pollinations implements INodeType {
 				},
 			},
 
-			// Model (Image)
+			// Model (Image) - Dynamic loading
 			{
 				displayName: 'Model',
 				name: 'model',
@@ -82,43 +82,9 @@ export class Pollinations implements INodeType {
 						operation: ['generateImage'],
 					},
 				},
-				options: [
-					{
-						name: 'Flux (Default)',
-						value: 'flux',
-						description: 'High quality image generation model',
-					},
-					{
-						name: 'Turbo',
-						value: 'turbo',
-						description: 'Faster generation with good quality',
-					},
-					{
-						name: 'GPT Image',
-						value: 'gptimage',
-						description: 'OpenAI DALL-E style generation',
-					},
-					{
-						name: 'Kontext',
-						value: 'kontext',
-						description: 'Context-aware image generation (strict content filter)',
-					},
-					{
-						name: 'Seedream',
-						value: 'seedream',
-						description: 'Dream-like artistic images',
-					},
-					{
-						name: 'Nanobanana',
-						value: 'nanobanana',
-						description: 'Lightweight fast model',
-					},
-					{
-						name: 'Nanobanana Pro',
-						value: 'nanobanana-pro',
-						description: 'Enhanced nanobanana model',
-					},
-				],
+				typeOptions: {
+					loadOptionsMethod: 'getImageModels',
+				},
 				description: 'The model to use for image generation',
 			},
 
@@ -262,6 +228,20 @@ export class Pollinations implements INodeType {
 				},
 			},
 
+			// JSON Response (Text)
+			{
+				displayName: 'JSON Response',
+				name: 'jsonMode',
+				type: 'boolean',
+				default: false,
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				description: 'Whether to force the response in JSON format',
+			},
+
 			// Advanced Options (Text)
 			{
 				displayName: 'Options',
@@ -282,13 +262,6 @@ export class Pollinations implements INodeType {
 						default: -1,
 						description: 'Seed for reproducible results. Use -1 for random.',
 					},
-					{
-						displayName: 'JSON Response',
-						name: 'jsonMode',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to force the response in JSON format',
-					},
 				],
 			},
 		],
@@ -296,6 +269,42 @@ export class Pollinations implements INodeType {
 
 	methods = {
 		loadOptions: {
+			async getImageModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				try {
+					const response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: 'https://gen.pollinations.ai/image/models',
+					});
+
+					if (Array.isArray(response)) {
+						return response.map((model: { name: string; description: string }) => ({
+							name: model.description || model.name,
+							value: model.name,
+						}));
+					}
+
+					// Fallback if API fails
+					return [
+						{ name: 'Flux Schnell', value: 'flux' },
+						{ name: 'SDXL Turbo', value: 'turbo' },
+						{ name: 'GPT Image 1 Mini', value: 'gptimage' },
+						{ name: 'FLUX.1 Kontext', value: 'kontext' },
+						{ name: 'Seedream 4.0', value: 'seedream' },
+						{ name: 'NanoBanana', value: 'nanobanana' },
+						{ name: 'NanoBanana Pro', value: 'nanobanana-pro' },
+					];
+				} catch {
+					// Fallback if API fails
+					return [
+						{ name: 'Flux Schnell', value: 'flux' },
+						{ name: 'SDXL Turbo', value: 'turbo' },
+						{ name: 'GPT Image 1 Mini', value: 'gptimage' },
+						{ name: 'FLUX.1 Kontext', value: 'kontext' },
+						{ name: 'Seedream 4.0', value: 'seedream' },
+					];
+				}
+			},
+
 			async getTextModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				try {
 					const response = await this.helpers.httpRequest({
@@ -445,10 +454,14 @@ export class Pollinations implements INodeType {
 				const model = this.getNodeParameter('textModel', i) as string;
 				const systemPrompt = this.getNodeParameter('systemPrompt', i, '') as string;
 				const temperature = this.getNodeParameter('temperature', i) as number;
+				const jsonMode = this.getNodeParameter('jsonMode', i, false) as boolean;
 				const textOptions = this.getNodeParameter('textOptions', i, {}) as {
 					seed?: number;
-					jsonMode?: boolean;
 				};
+
+				// Get credentials
+				const credentials = await this.getCredentials('pollinationsApi');
+				const apiKey = credentials.apiKey as string;
 
 				// Build query parameters
 				const queryParams: Record<string, string> = {
@@ -462,7 +475,7 @@ export class Pollinations implements INodeType {
 				if (textOptions.seed !== undefined && textOptions.seed !== -1) {
 					queryParams.seed = textOptions.seed.toString();
 				}
-				if (textOptions.jsonMode) {
+				if (jsonMode) {
 					queryParams.json = 'true';
 				}
 
@@ -475,10 +488,13 @@ export class Pollinations implements INodeType {
 				// Record start time
 				const startTime = Date.now();
 
-				// Make the request
+				// Make the request with authentication
 				const response = await this.helpers.httpRequest({
 					method: 'GET',
 					url: fullUrl,
+					headers: {
+						Authorization: `Bearer ${apiKey}`,
+					},
 					returnFullResponse: true,
 				});
 
@@ -490,7 +506,7 @@ export class Pollinations implements INodeType {
 				let parsedJson = null;
 
 				// If JSON mode, try to parse the response
-				if (textOptions.jsonMode) {
+				if (jsonMode) {
 					try {
 						parsedJson = JSON.parse(text);
 					} catch {
@@ -508,7 +524,7 @@ export class Pollinations implements INodeType {
 						system: systemPrompt || null,
 						temperature,
 						seed: textOptions.seed !== -1 ? textOptions.seed : null,
-						jsonMode: textOptions.jsonMode || false,
+						jsonMode: jsonMode,
 					},
 					response: {
 						statusCode: response.statusCode,
