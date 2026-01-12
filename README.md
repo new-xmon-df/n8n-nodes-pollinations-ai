@@ -62,17 +62,46 @@ Generate text from a prompt using AI language models.
 
 ## Credentials
 
-To use this node, you need a Pollinations API key:
+To use this node, you need a Pollinations API key.
+
+### Creating an API Key
 
 1. Go to [enter.pollinations.ai](https://enter.pollinations.ai)
-2. Create an account and generate an API key
-3. In n8n, create a new **Pollinations API** credential
-4. Paste your API key (either `pk_` or `sk_` type)
+2. Sign up or log in to your account
+3. Navigate to **API Keys** section
+4. Click **Create API Key**
+5. Configure your key:
+   - **Name**: Give your key a descriptive name (e.g., "n8n Integration")
+   - **Type**: Choose between Publishable (`pk_`) or Secret (`sk_`)
+   - **Model Access**: Select which models this key can use (see below)
+6. Copy the generated key
 
-### Key Types
+### Configuring Model Access
 
-- **Publishable Keys (`pk_`)**: Client-side safe, IP rate-limited
-- **Secret Keys (`sk_`)**: Server-side, no rate limits, can spend Pollen
+When creating an API key, you can restrict which models the key has access to. This is useful for:
+
+- **Cost control**: Limit access to expensive models
+- **Security**: Restrict capabilities of shared keys
+- **Organization**: Create keys for specific use cases
+
+The node automatically filters the model dropdown to show only the models your API key has permission to use. If you don't see a model you expect, check your key's model permissions at [enter.pollinations.ai](https://enter.pollinations.ai).
+
+### Setting up in n8n
+
+1. In n8n, go to **Credentials**
+2. Click **Add Credential**
+3. Search for **Pollinations API**
+4. Paste your API key
+5. Click **Save**
+
+### API Key Types
+
+| Type | Prefix | Use Case | Rate Limits |
+|------|--------|----------|-------------|
+| **Publishable** | `pk_` | Client-side apps, testing | IP-based rate limiting |
+| **Secret** | `sk_` | Server-side, production | No rate limits, can spend Pollen |
+
+> **Important**: Secret keys (`sk_`) should never be exposed in client-side code. Use them only in server environments like n8n.
 
 ## Available Models
 

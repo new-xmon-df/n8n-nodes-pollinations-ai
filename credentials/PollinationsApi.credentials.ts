@@ -1,5 +1,6 @@
 import {
 	IAuthenticateGeneric,
+	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
@@ -7,7 +8,7 @@ import {
 export class PollinationsApi implements ICredentialType {
 	name = 'pollinationsApi';
 	displayName = 'Pollinations API';
-	documentationUrl = 'https://enter.pollinations.ai/api/docs';
+	documentationUrl = 'https://github.com/new-xmon-df/n8n-nodes-pollinations-ai#credentials';
 
 	properties: INodeProperties[] = [
 		{
@@ -17,7 +18,8 @@ export class PollinationsApi implements ICredentialType {
 			typeOptions: { password: true },
 			default: '',
 			required: true,
-			description: 'Your Pollinations API Key (pk_ or sk_). Get it at https://enter.pollinations.ai',
+			description:
+				'Your Pollinations API Key (pk_ or sk_). Get it at https://enter.pollinations.ai. The available models will be filtered based on your key permissions.',
 		},
 	];
 
@@ -27,6 +29,13 @@ export class PollinationsApi implements ICredentialType {
 			headers: {
 				Authorization: '=Bearer {{$credentials.apiKey}}',
 			},
+		},
+	};
+
+	test: ICredentialTestRequest = {
+		request: {
+			baseURL: 'https://gen.pollinations.ai',
+			url: '/image/models',
 		},
 	};
 }

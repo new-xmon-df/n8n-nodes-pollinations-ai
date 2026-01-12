@@ -265,13 +265,26 @@ export class Pollinations implements INodeType {
 		loadOptions: {
 			async getImageModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				try {
+					const credentials = await this.getCredentials('pollinationsApi');
+					const apiKey = credentials.apiKey as string;
+
 					const response = await this.helpers.httpRequest({
 						method: 'GET',
 						url: 'https://gen.pollinations.ai/image/models',
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
 					});
 
 					if (Array.isArray(response)) {
-						return response.map((model: { name: string; description: string }) => ({
+						// Filter only image models (exclude video models)
+						const imageModels = response.filter(
+							(model: { output_modalities?: string[] }) =>
+								model.output_modalities?.includes('image') &&
+								!model.output_modalities?.includes('video'),
+						);
+
+						return imageModels.map((model: { name: string; description: string }) => ({
 							name: model.description || model.name,
 							value: model.name,
 						}));
@@ -301,9 +314,15 @@ export class Pollinations implements INodeType {
 
 			async getTextModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				try {
+					const credentials = await this.getCredentials('pollinationsApi');
+					const apiKey = credentials.apiKey as string;
+
 					const response = await this.helpers.httpRequest({
 						method: 'GET',
 						url: 'https://gen.pollinations.ai/text/models',
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
 					});
 
 					if (Array.isArray(response)) {
