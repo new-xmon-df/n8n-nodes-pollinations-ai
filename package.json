@@ -1,14 +1,17 @@
 {
 	"name": "n8n-nodes-pollinations-ai",
 	"version": "0.1.0",
-	"description": "n8n community node to generate images using Pollinations AI",
+	"description": "n8n community node for Pollinations AI - image generation and chat models",
 	"keywords": [
 		"n8n-community-node-package",
 		"n8n",
 		"pollinations",
 		"ai",
 		"image-generation",
-		"flux"
+		"flux",
+		"chat-model",
+		"llm",
+		"langchain"
 	],
 	"license": "MIT",
 	"homepage": "https://github.com/new-xmon-df/n8n-nodes-pollinations-ai",
@@ -38,7 +41,8 @@
 			"dist/credentials/PollinationsApi.credentials.js"
 		],
 		"nodes": [
-			"dist/nodes/Pollinations/Pollinations.node.js"
+			"dist/nodes/Pollinations/Pollinations.node.js",
+			"dist/nodes/Pollinations/PollinationsChatModel.node.js"
 		]
 	},
 	"scripts": {
@@ -65,5 +69,9 @@
 	},
 	"peerDependencies": {
 		"n8n-workflow": "*"
+	},
+	"dependencies": {
+		"@langchain/core": "^1.1.12",
+		"@langchain/openai": "^1.2.1"
 	}
 }

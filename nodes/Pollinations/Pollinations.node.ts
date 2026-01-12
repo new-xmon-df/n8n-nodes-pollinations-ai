@@ -342,7 +342,15 @@ export class Pollinations implements INodeType {
 					});
 
 					if (Array.isArray(response)) {
-						return response.map(
+						// Filter only text models (exclude image/video models)
+						const textModels = response.filter(
+							(model: { output_modalities?: string[] }) =>
+								model.output_modalities?.includes('text') &&
+								!model.output_modalities?.includes('image') &&
+								!model.output_modalities?.includes('video'),
+						);
+
+						return textModels.map(
 							(model: {
 								name: string;
 								description: string;
@@ -366,28 +374,28 @@ export class Pollinations implements INodeType {
 
 					// Fallback if API fails
 					return [
-						{ name: 'OpenAI GPT-5 Mini', value: 'openai' },
-						{ name: 'OpenAI GPT-5 Nano (Fast)', value: 'openai-fast' },
-						{ name: 'OpenAI GPT-5.2 (Large)', value: 'openai-large' },
-						{ name: 'Claude Sonnet 4.5', value: 'claude' },
+						{ name: 'OpenAI GPT-4o Mini', value: 'openai' },
+						{ name: 'OpenAI GPT-4o Mini (Fast)', value: 'openai-fast' },
+						{ name: 'OpenAI GPT-4o (Large)', value: 'openai-large' },
+						{ name: 'Claude Sonnet 3.5', value: 'claude' },
 						{ name: 'Claude (Fast)', value: 'claude-fast' },
 						{ name: 'Claude (Large)', value: 'claude-large' },
 						{ name: 'Gemini', value: 'gemini' },
 						{ name: 'Gemini (Fast)', value: 'gemini-fast' },
 						{ name: 'Gemini (Large)', value: 'gemini-large' },
-						{ name: 'DeepSeek V3.2', value: 'deepseek' },
+						{ name: 'DeepSeek V3', value: 'deepseek' },
 						{ name: 'Mistral', value: 'mistral' },
 						{ name: 'Grok', value: 'grok' },
 					];
 				} catch {
 					// Fallback if API fails
 					return [
-						{ name: 'OpenAI GPT-5 Mini', value: 'openai' },
-						{ name: 'OpenAI GPT-5 Nano (Fast)', value: 'openai-fast' },
-						{ name: 'OpenAI GPT-5.2 (Large)', value: 'openai-large' },
-						{ name: 'Claude Sonnet 4.5', value: 'claude' },
+						{ name: 'OpenAI GPT-4o Mini', value: 'openai' },
+						{ name: 'OpenAI GPT-4o Mini (Fast)', value: 'openai-fast' },
+						{ name: 'OpenAI GPT-4o (Large)', value: 'openai-large' },
+						{ name: 'Claude Sonnet 3.5', value: 'claude' },
 						{ name: 'Mistral', value: 'mistral' },
-						{ name: 'DeepSeek V3.2', value: 'deepseek' },
+						{ name: 'DeepSeek V3', value: 'deepseek' },
 					];
 				}
 			},
