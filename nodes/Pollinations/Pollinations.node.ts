@@ -350,10 +350,10 @@ export class Pollinations implements INodeType {
 							}) => {
 								let displayName = model.description || model.name;
 
-								// Add pricing info if available (cost per 1M output tokens)
+								// Add pricing info if available (responses per pollen)
 								if (model.pricing?.completionTextTokens) {
-									const costPerMillion = model.pricing.completionTextTokens * 1_000_000;
-									displayName += ` ($${costPerMillion.toFixed(2)}/1M tok)`;
+									const responsesPerPollen = Math.floor(1 / model.pricing.completionTextTokens);
+									displayName += ` (~${responsesPerPollen.toLocaleString()} resp/$)`;
 								}
 
 								return {
