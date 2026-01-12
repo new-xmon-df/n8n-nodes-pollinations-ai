@@ -1,6 +1,8 @@
 import {
 	IExecuteFunctions,
+	ILoadOptionsFunctions,
 	INodeExecutionData,
+	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
@@ -13,7 +15,7 @@ export class Pollinations implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
-		description: 'Generate images using Pollinations AI',
+		description: 'Generate images and text using Pollinations AI',
 		defaults: {
 			name: 'Pollinations',
 		},
@@ -39,11 +41,19 @@ export class Pollinations implements INodeType {
 						description: 'Generate an image from a text prompt',
 						action: 'Generate an image from a text prompt',
 					},
+					{
+						name: 'Generate Text',
+						value: 'generateText',
+						description: 'Generate text from a prompt using AI',
+						action: 'Generate text from a prompt',
+					},
 				],
 				default: 'generateImage',
 			},
 
-			// Prompt (Basic)
+			// ==================== GENERATE IMAGE ====================
+
+			// Prompt (Image)
 			{
 				displayName: 'Prompt',
 				name: 'prompt',
@@ -61,7 +71,7 @@ export class Pollinations implements INodeType {
 				},
 			},
 
-			// Model (Basic)
+			// Model (Image)
 			{
 				displayName: 'Model',
 				name: 'model',
@@ -112,7 +122,7 @@ export class Pollinations implements INodeType {
 				description: 'The model to use for image generation',
 			},
 
-			// Advanced Options
+			// Advanced Options (Image)
 			{
 				displayName: 'Options',
 				name: 'options',
@@ -177,7 +187,157 @@ export class Pollinations implements INodeType {
 					},
 				],
 			},
+
+			// ==================== GENERATE TEXT ====================
+
+			// Prompt (Text)
+			{
+				displayName: 'Prompt',
+				name: 'textPrompt',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				description: 'The text prompt or question for the AI model',
+				typeOptions: {
+					rows: 4,
+				},
+			},
+
+			// Model (Text) - Dynamic loading
+			{
+				displayName: 'Model',
+				name: 'textModel',
+				type: 'options',
+				default: 'openai',
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				typeOptions: {
+					loadOptionsMethod: 'getTextModels',
+				},
+				description: 'The AI model to use for text generation',
+			},
+
+			// System Prompt (Text)
+			{
+				displayName: 'System Prompt',
+				name: 'systemPrompt',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				description: 'Instructions that define the AI behavior and context',
+				placeholder: 'You are a helpful assistant that responds concisely...',
+				typeOptions: {
+					rows: 3,
+				},
+			},
+
+			// Temperature (Text)
+			{
+				displayName: 'Temperature',
+				name: 'temperature',
+				type: 'number',
+				default: 0.7,
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				description: 'Controls creativity: 0.0 = strict/deterministic, 2.0 = very creative',
+				typeOptions: {
+					minValue: 0,
+					maxValue: 2,
+					numberPrecision: 1,
+				},
+			},
+
+			// Advanced Options (Text)
+			{
+				displayName: 'Options',
+				name: 'textOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Seed',
+						name: 'seed',
+						type: 'number',
+						default: -1,
+						description: 'Seed for reproducible results. Use -1 for random.',
+					},
+					{
+						displayName: 'JSON Response',
+						name: 'jsonMode',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to force the response in JSON format',
+					},
+				],
+			},
 		],
+	};
+
+	methods = {
+		loadOptions: {
+			async getTextModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				try {
+					const response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: 'https://gen.pollinations.ai/text/models',
+					});
+
+					if (Array.isArray(response)) {
+						return response.map((model: { name: string; description: string }) => ({
+							name: model.description || model.name,
+							value: model.name,
+						}));
+					}
+
+					// Fallback if API fails
+					return [
+						{ name: 'OpenAI GPT-5 Mini', value: 'openai' },
+						{ name: 'OpenAI GPT-5 Nano (Fast)', value: 'openai-fast' },
+						{ name: 'OpenAI GPT-5.2 (Large)', value: 'openai-large' },
+						{ name: 'Claude Sonnet 4.5', value: 'claude' },
+						{ name: 'Claude (Fast)', value: 'claude-fast' },
+						{ name: 'Claude (Large)', value: 'claude-large' },
+						{ name: 'Gemini', value: 'gemini' },
+						{ name: 'Gemini (Fast)', value: 'gemini-fast' },
+						{ name: 'Gemini (Large)', value: 'gemini-large' },
+						{ name: 'DeepSeek V3.2', value: 'deepseek' },
+						{ name: 'Mistral', value: 'mistral' },
+						{ name: 'Grok', value: 'grok' },
+					];
+				} catch {
+					// Fallback if API fails
+					return [
+						{ name: 'OpenAI GPT-5 Mini', value: 'openai' },
+						{ name: 'OpenAI GPT-5 Nano (Fast)', value: 'openai-fast' },
+						{ name: 'OpenAI GPT-5.2 (Large)', value: 'openai-large' },
+						{ name: 'Claude Sonnet 4.5', value: 'claude' },
+						{ name: 'Mistral', value: 'mistral' },
+						{ name: 'DeepSeek V3.2', value: 'deepseek' },
+					];
+				}
+			},
+		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
@@ -277,6 +437,89 @@ export class Pollinations implements INodeType {
 					binary: {
 						data: binaryData,
 					},
+				});
+			}
+
+			if (operation === 'generateText') {
+				const prompt = this.getNodeParameter('textPrompt', i) as string;
+				const model = this.getNodeParameter('textModel', i) as string;
+				const systemPrompt = this.getNodeParameter('systemPrompt', i, '') as string;
+				const temperature = this.getNodeParameter('temperature', i) as number;
+				const textOptions = this.getNodeParameter('textOptions', i, {}) as {
+					seed?: number;
+					jsonMode?: boolean;
+				};
+
+				// Build query parameters
+				const queryParams: Record<string, string> = {
+					model,
+					temperature: temperature.toString(),
+				};
+
+				if (systemPrompt) {
+					queryParams.system = systemPrompt;
+				}
+				if (textOptions.seed !== undefined && textOptions.seed !== -1) {
+					queryParams.seed = textOptions.seed.toString();
+				}
+				if (textOptions.jsonMode) {
+					queryParams.json = 'true';
+				}
+
+				// Build the URL
+				const baseUrl = 'https://gen.pollinations.ai/text';
+				const encodedPrompt = encodeURIComponent(prompt);
+				const queryString = new URLSearchParams(queryParams).toString();
+				const fullUrl = `${baseUrl}/${encodedPrompt}?${queryString}`;
+
+				// Record start time
+				const startTime = Date.now();
+
+				// Make the request
+				const response = await this.helpers.httpRequest({
+					method: 'GET',
+					url: fullUrl,
+					returnFullResponse: true,
+				});
+
+				// Calculate duration
+				const duration = Date.now() - startTime;
+
+				// Parse response text
+				const text = response.body as string;
+				let parsedJson = null;
+
+				// If JSON mode, try to parse the response
+				if (textOptions.jsonMode) {
+					try {
+						parsedJson = JSON.parse(text);
+					} catch {
+						// Keep as string if parsing fails
+					}
+				}
+
+				// Build metadata for debugging
+				const metadata = {
+					text: parsedJson || text,
+					request: {
+						url: fullUrl,
+						prompt,
+						model,
+						system: systemPrompt || null,
+						temperature,
+						seed: textOptions.seed !== -1 ? textOptions.seed : null,
+						jsonMode: textOptions.jsonMode || false,
+					},
+					response: {
+						statusCode: response.statusCode,
+						contentType: response.headers?.['content-type'] || 'text/plain',
+						duration: `${duration}ms`,
+					},
+					timestamp: new Date().toISOString(),
+				};
+
+				returnData.push({
+					json: metadata,
 				});
 			}
 		}
