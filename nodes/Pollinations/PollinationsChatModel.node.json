@@ -1,0 +1,17 @@
+{
+	"node": "n8n-nodes-pollinations-ai.pollinationsChatModel",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["AI"],
+	"subcategories": {
+		"AI": ["Language Models", "Chat Models"]
+	},
+	"resources": {
+		"primaryDocumentation": [
+			{
+				"url": "https://enter.pollinations.ai/api/docs"
+			}
+		]
+	},
+	"alias": ["pollinations", "chat", "llm", "ai", "language model", "gpt", "claude", "gemini", "mistral", "deepseek", "grok", "chat model", "openai compatible"]
+}

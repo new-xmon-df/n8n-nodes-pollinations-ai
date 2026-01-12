@@ -1,6 +1,8 @@
 import {
 	IExecuteFunctions,
+	ILoadOptionsFunctions,
 	INodeExecutionData,
+	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
@@ -13,7 +15,7 @@ export class Pollinations implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
-		description: 'Generate images using Pollinations AI',
+		description: 'Generate images and text using Pollinations AI',
 		defaults: {
 			name: 'Pollinations',
 		},
@@ -39,11 +41,19 @@ export class Pollinations implements INodeType {
 						description: 'Generate an image from a text prompt',
 						action: 'Generate an image from a text prompt',
 					},
+					{
+						name: 'Generate Text',
+						value: 'generateText',
+						description: 'Generate text from a prompt using AI',
+						action: 'Generate text from a prompt',
+					},
 				],
 				default: 'generateImage',
 			},
 
-			// Prompt (Basic)
+			// ==================== GENERATE IMAGE ====================
+
+			// Prompt (Image)
 			{
 				displayName: 'Prompt',
 				name: 'prompt',
@@ -61,7 +71,7 @@ export class Pollinations implements INodeType {
 				},
 			},
 
-			// Model (Basic)
+			// Model (Image) - Dynamic loading
 			{
 				displayName: 'Model',
 				name: 'model',
@@ -72,47 +82,13 @@ export class Pollinations implements INodeType {
 						operation: ['generateImage'],
 					},
 				},
-				options: [
-					{
-						name: 'Flux (Default)',
-						value: 'flux',
-						description: 'High quality image generation model',
-					},
-					{
-						name: 'Turbo',
-						value: 'turbo',
-						description: 'Faster generation with good quality',
-					},
-					{
-						name: 'GPT Image',
-						value: 'gptimage',
-						description: 'OpenAI DALL-E style generation',
-					},
-					{
-						name: 'Kontext',
-						value: 'kontext',
-						description: 'Context-aware image generation (strict content filter)',
-					},
-					{
-						name: 'Seedream',
-						value: 'seedream',
-						description: 'Dream-like artistic images',
-					},
-					{
-						name: 'Nanobanana',
-						value: 'nanobanana',
-						description: 'Lightweight fast model',
-					},
-					{
-						name: 'Nanobanana Pro',
-						value: 'nanobanana-pro',
-						description: 'Enhanced nanobanana model',
-					},
-				],
+				typeOptions: {
+					loadOptionsMethod: 'getImageModels',
+				},
 				description: 'The model to use for image generation',
 			},
 
-			// Advanced Options
+			// Advanced Options (Image)
 			{
 				displayName: 'Options',
 				name: 'options',
@@ -177,7 +153,253 @@ export class Pollinations implements INodeType {
 					},
 				],
 			},
+
+			// ==================== GENERATE TEXT ====================
+
+			// Prompt (Text)
+			{
+				displayName: 'Prompt',
+				name: 'textPrompt',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				description: 'The text prompt or question for the AI model',
+				typeOptions: {
+					rows: 4,
+				},
+			},
+
+			// Model (Text) - Dynamic loading
+			{
+				displayName: 'Model',
+				name: 'textModel',
+				type: 'options',
+				default: 'openai',
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				typeOptions: {
+					loadOptionsMethod: 'getTextModels',
+				},
+				description: 'The AI model to use for text generation',
+			},
+
+			// System Prompt (Text)
+			{
+				displayName: 'System Prompt',
+				name: 'systemPrompt',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				description: 'Instructions that define the AI behavior and context',
+				placeholder: 'You are a helpful assistant that responds concisely...',
+				typeOptions: {
+					rows: 3,
+				},
+			},
+
+			// Temperature (Text)
+			{
+				displayName: 'Temperature',
+				name: 'temperature',
+				type: 'number',
+				default: 0.7,
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				description: 'Controls creativity: 0.0 = strict/deterministic, 2.0 = very creative',
+				typeOptions: {
+					minValue: 0,
+					maxValue: 2,
+					numberPrecision: 1,
+				},
+			},
+
+			// Advanced Options (Text)
+			{
+				displayName: 'Options',
+				name: 'textOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						operation: ['generateText'],
+					},
+				},
+				options: [
+					{
+						displayName: 'JSON Response',
+						name: 'jsonMode',
+						type: 'boolean',
+						default: false,
+						description:
+							'Whether to force the response in JSON format. Not supported by all models.',
+					},
+					{
+						displayName: 'Seed',
+						name: 'seed',
+						type: 'number',
+						default: -1,
+						description: 'Seed for reproducible results. Use -1 for random.',
+					},
+				],
+			},
 		],
+	};
+
+	methods = {
+		loadOptions: {
+			async getImageModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				try {
+					const credentials = await this.getCredentials('pollinationsApi');
+					const apiKey = credentials.apiKey as string;
+
+					const response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: 'https://gen.pollinations.ai/image/models',
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+					});
+
+					if (Array.isArray(response)) {
+						// Filter only image models (exclude video models)
+						const imageModels = response.filter(
+							(model: { output_modalities?: string[] }) =>
+								model.output_modalities?.includes('image') &&
+								!model.output_modalities?.includes('video'),
+						);
+
+						return imageModels.map(
+							(model: {
+								name: string;
+								description: string;
+								pricing?: { completionImageTokens?: number };
+							}) => {
+								let displayName = model.description || model.name;
+
+								// Add pricing info if available
+								if (model.pricing?.completionImageTokens) {
+									const imagesPerPollen = Math.floor(1 / model.pricing.completionImageTokens);
+									displayName += ` (~${imagesPerPollen.toLocaleString()} img/$)`;
+								}
+
+								return {
+									name: displayName,
+									value: model.name,
+								};
+							},
+						);
+					}
+
+					// Fallback if API fails
+					return [
+						{ name: 'Flux Schnell', value: 'flux' },
+						{ name: 'SDXL Turbo', value: 'turbo' },
+						{ name: 'GPT Image 1 Mini', value: 'gptimage' },
+						{ name: 'FLUX.1 Kontext', value: 'kontext' },
+						{ name: 'Seedream 4.0', value: 'seedream' },
+						{ name: 'NanoBanana', value: 'nanobanana' },
+						{ name: 'NanoBanana Pro', value: 'nanobanana-pro' },
+					];
+				} catch {
+					// Fallback if API fails
+					return [
+						{ name: 'Flux Schnell', value: 'flux' },
+						{ name: 'SDXL Turbo', value: 'turbo' },
+						{ name: 'GPT Image 1 Mini', value: 'gptimage' },
+						{ name: 'FLUX.1 Kontext', value: 'kontext' },
+						{ name: 'Seedream 4.0', value: 'seedream' },
+					];
+				}
+			},
+
+			async getTextModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				try {
+					const credentials = await this.getCredentials('pollinationsApi');
+					const apiKey = credentials.apiKey as string;
+
+					const response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: 'https://gen.pollinations.ai/text/models',
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+					});
+
+					if (Array.isArray(response)) {
+						// Filter only text models (exclude image/video models)
+						const textModels = response.filter(
+							(model: { output_modalities?: string[] }) =>
+								model.output_modalities?.includes('text') &&
+								!model.output_modalities?.includes('image') &&
+								!model.output_modalities?.includes('video'),
+						);
+
+						return textModels.map(
+							(model: {
+								name: string;
+								description: string;
+								pricing?: { completionTextTokens?: number };
+							}) => {
+								let displayName = model.description || model.name;
+
+								// Add pricing info if available (responses per pollen)
+								if (model.pricing?.completionTextTokens) {
+									const responsesPerPollen = Math.floor(1 / model.pricing.completionTextTokens);
+									displayName += ` (~${responsesPerPollen.toLocaleString()} resp/$)`;
+								}
+
+								return {
+									name: displayName,
+									value: model.name,
+								};
+							},
+						);
+					}
+
+					// Fallback if API fails
+					return [
+						{ name: 'OpenAI GPT-4o Mini', value: 'openai' },
+						{ name: 'OpenAI GPT-4o Mini (Fast)', value: 'openai-fast' },
+						{ name: 'OpenAI GPT-4o (Large)', value: 'openai-large' },
+						{ name: 'Claude Sonnet 3.5', value: 'claude' },
+						{ name: 'Claude (Fast)', value: 'claude-fast' },
+						{ name: 'Claude (Large)', value: 'claude-large' },
+						{ name: 'Gemini', value: 'gemini' },
+						{ name: 'Gemini (Fast)', value: 'gemini-fast' },
+						{ name: 'Gemini (Large)', value: 'gemini-large' },
+						{ name: 'DeepSeek V3', value: 'deepseek' },
+						{ name: 'Mistral', value: 'mistral' },
+						{ name: 'Grok', value: 'grok' },
+					];
+				} catch {
+					// Fallback if API fails
+					return [
+						{ name: 'OpenAI GPT-4o Mini', value: 'openai' },
+						{ name: 'OpenAI GPT-4o Mini (Fast)', value: 'openai-fast' },
+						{ name: 'OpenAI GPT-4o (Large)', value: 'openai-large' },
+						{ name: 'Claude Sonnet 3.5', value: 'claude' },
+						{ name: 'Mistral', value: 'mistral' },
+						{ name: 'DeepSeek V3', value: 'deepseek' },
+					];
+				}
+			},
+		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
@@ -198,6 +420,10 @@ export class Pollinations implements INodeType {
 					enhance?: boolean;
 					safe?: boolean;
 				};
+
+				// Get credentials
+				const credentials = await this.getCredentials('pollinationsApi');
+				const apiKey = credentials.apiKey as string;
 
 				// Build query parameters
 				const queryParams: Record<string, string> = {
@@ -224,7 +450,7 @@ export class Pollinations implements INodeType {
 				}
 
 				// Build the URL
-				const baseUrl = 'https://image.pollinations.ai/prompt';
+				const baseUrl = 'https://gen.pollinations.ai/image';
 				const encodedPrompt = encodeURIComponent(prompt);
 				const queryString = new URLSearchParams(queryParams).toString();
 				const fullUrl = `${baseUrl}/${encodedPrompt}?${queryString}`;
@@ -232,10 +458,13 @@ export class Pollinations implements INodeType {
 				// Record start time
 				const startTime = Date.now();
 
-				// Make the request
+				// Make the request with authentication
 				const response = await this.helpers.httpRequest({
 					method: 'GET',
 					url: fullUrl,
+					headers: {
+						Authorization: `Bearer ${apiKey}`,
+					},
 					encoding: 'arraybuffer',
 					returnFullResponse: true,
 				});
@@ -277,6 +506,97 @@ export class Pollinations implements INodeType {
 					binary: {
 						data: binaryData,
 					},
+				});
+			}
+
+			if (operation === 'generateText') {
+				const prompt = this.getNodeParameter('textPrompt', i) as string;
+				const model = this.getNodeParameter('textModel', i) as string;
+				const systemPrompt = this.getNodeParameter('systemPrompt', i, '') as string;
+				const temperature = this.getNodeParameter('temperature', i) as number;
+				const textOptions = this.getNodeParameter('textOptions', i, {}) as {
+					jsonMode?: boolean;
+					seed?: number;
+				};
+				const jsonMode = textOptions.jsonMode || false;
+
+				// Get credentials
+				const credentials = await this.getCredentials('pollinationsApi');
+				const apiKey = credentials.apiKey as string;
+
+				// Build query parameters
+				const queryParams: Record<string, string> = {
+					model,
+					temperature: temperature.toString(),
+				};
+
+				if (systemPrompt) {
+					queryParams.system = systemPrompt;
+				}
+				if (textOptions.seed !== undefined && textOptions.seed !== -1) {
+					queryParams.seed = textOptions.seed.toString();
+				}
+				if (jsonMode) {
+					queryParams.json = 'true';
+				}
+
+				// Build the URL
+				const baseUrl = 'https://gen.pollinations.ai/text';
+				const encodedPrompt = encodeURIComponent(prompt);
+				const queryString = new URLSearchParams(queryParams).toString();
+				const fullUrl = `${baseUrl}/${encodedPrompt}?${queryString}`;
+
+				// Record start time
+				const startTime = Date.now();
+
+				// Make the request with authentication
+				const response = await this.helpers.httpRequest({
+					method: 'GET',
+					url: fullUrl,
+					headers: {
+						Authorization: `Bearer ${apiKey}`,
+					},
+					returnFullResponse: true,
+				});
+
+				// Calculate duration
+				const duration = Date.now() - startTime;
+
+				// Parse response text
+				const text = response.body as string;
+				let parsedJson = null;
+
+				// If JSON mode, try to parse the response
+				if (jsonMode) {
+					try {
+						parsedJson = JSON.parse(text);
+					} catch {
+						// Keep as string if parsing fails
+					}
+				}
+
+				// Build metadata for debugging
+				const metadata = {
+					text: parsedJson || text,
+					request: {
+						url: fullUrl,
+						prompt,
+						model,
+						system: systemPrompt || null,
+						temperature,
+						seed: textOptions.seed !== -1 ? textOptions.seed : null,
+						jsonMode: jsonMode,
+					},
+					response: {
+						statusCode: response.statusCode,
+						contentType: response.headers?.['content-type'] || 'text/plain',
+						duration: `${duration}ms`,
+					},
+					timestamp: new Date().toISOString(),
+				};
+
+				returnData.push({
+					json: metadata,
 				});
 			}
 		}

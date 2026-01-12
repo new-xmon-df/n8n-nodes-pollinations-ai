@@ -1,12 +1,8 @@
 # n8n-nodes-pollinations-ai
 
-[![GitHub release](https://img.shields.io/github/v/release/new-xmon-df/n8n-nodes-pollinations-ai)](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![n8n community node](https://img.shields.io/badge/n8n-community%20node-ff6d5a)](https://n8n.io)
+This is an n8n community node that lets you generate images and text using [Pollinations AI](https://pollinations.ai) in your n8n workflows.
 
-This is an n8n community node that lets you generate images using [Pollinations AI](https://pollinations.ai) in your n8n workflows.
-
-[Pollinations](https://pollinations.ai) is an AI image generation platform that provides access to various models like Flux, Turbo, GPT Image, and more.
+[Pollinations](https://pollinations.ai) is an AI platform that provides access to various image and text generation models.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
@@ -20,15 +16,6 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 2. Select **Install**
 3. Enter `n8n-nodes-pollinations-ai` and confirm
 
-### Install from GitHub
-
-```bash
-cd ~/.n8n/nodes
-npm install github:new-xmon-df/n8n-nodes-pollinations-ai
-```
-
-Then restart n8n.
-
 ## Operations
 
 ### Generate Image
@@ -40,7 +27,7 @@ Generate an image from a text prompt using Pollinations AI.
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | Prompt | Yes | The text prompt to generate the image from |
-| Model | Yes | The model to use (Flux, Turbo, GPT Image, etc.) |
+| Model | Yes | The model to use (loaded dynamically from API) |
 
 **Advanced Options:**
 
@@ -53,67 +40,91 @@ Generate an image from a text prompt using Pollinations AI.
 | Enhance Prompt | false | Automatically enhance the prompt |
 | Safe Mode | false | Enable content safety filter |
 
-## Output
+### Generate Text
 
-The node returns both **binary data** (the image) and **JSON metadata** for debugging:
+Generate text from a prompt using AI language models.
 
-```json
-{
-  "request": {
-    "url": "https://image.pollinations.ai/prompt/your%20prompt?model=flux",
-    "prompt": "your prompt",
-    "model": "flux",
-    "width": 1024,
-    "height": 1024,
-    "seed": null,
-    "nologo": false,
-    "enhance": false,
-    "safe": false
-  },
-  "response": {
-    "statusCode": 200,
-    "contentType": "image/jpeg",
-    "duration": "4523ms"
-  },
-  "timestamp": "2026-01-11T23:25:00.000Z"
-}
-```
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| Prompt | Yes | The text prompt or question for the AI model |
+| Model | Yes | The AI model to use (loaded dynamically from API) |
+| System Prompt | No | Instructions that define the AI behavior and context |
+| Temperature | No | Controls creativity: 0.0 = strict, 2.0 = very creative (default: 0.7) |
+
+**Advanced Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| JSON Response | false | Force the response in JSON format (not supported by all models) |
+| Seed | -1 | Seed for reproducible results (-1 = random) |
 
 ## Credentials
 
-To use this node, you need a Pollinations API key:
+To use this node, you need a Pollinations API key.
+
+### Creating an API Key
 
 1. Go to [enter.pollinations.ai](https://enter.pollinations.ai)
-2. Create an account and generate an API key
-3. In n8n, create a new **Pollinations API** credential
-4. Paste your API key (either `pk_` or `sk_` type)
+2. Sign up or log in to your account
+3. Navigate to **API Keys** section
+4. Click **Create API Key**
+5. Configure your key:
+   - **Name**: Give your key a descriptive name (e.g., "n8n Integration")
+   - **Type**: Choose between Publishable (`pk_`) or Secret (`sk_`)
+   - **Model Access**: Select which models this key can use (see below)
+6. Copy the generated key
 
-### Key Types
+### Configuring Model Access
 
-- **Publishable Keys (`pk_`)**: Client-side safe, IP rate-limited
-- **Secret Keys (`sk_`)**: Server-side, no rate limits, can spend Pollen
+When creating an API key, you can restrict which models the key has access to. This is useful for:
+
+- **Cost control**: Limit access to expensive models
+- **Security**: Restrict capabilities of shared keys
+- **Organization**: Create keys for specific use cases
+
+The node automatically filters the model dropdown to show only the models your API key has permission to use. If you don't see a model you expect, check your key's model permissions at [enter.pollinations.ai](https://enter.pollinations.ai).
+
+### Setting up in n8n
+
+1. In n8n, go to **Credentials**
+2. Click **Add Credential**
+3. Search for **Pollinations API**
+4. Paste your API key
+5. Click **Save**
+
+### API Key Types
+
+| Type | Prefix | Use Case | Rate Limits |
+|------|--------|----------|-------------|
+| **Publishable** | `pk_` | Client-side apps, testing | IP-based rate limiting |
+| **Secret** | `sk_` | Server-side, production | No rate limits, can spend Pollen |
+
+> **Important**: Secret keys (`sk_`) should never be exposed in client-side code. Use them only in server environments like n8n.
 
 ## Available Models
 
-| Model | Description |
-|-------|-------------|
-| Flux | High quality image generation (default) |
-| Turbo | Faster generation with good quality |
-| GPT Image | OpenAI DALL-E style generation |
-| Kontext | Context-aware image generation (strict content filter) |
-| Seedream | Dream-like artistic images |
-| Nanobanana | Lightweight fast model |
-| Nanobanana Pro | Enhanced nanobanana model |
+Models are loaded dynamically from the Pollinations API, ensuring you always have access to the latest available models.
+
+### Image Models
+
+Common models include Flux, Turbo, GPT Image, Kontext, Seedream, and more.
+
+### Text Models
+
+Common models include OpenAI GPT-5, Claude, Gemini, DeepSeek, Mistral, and more.
 
 ## Example Usage
 
 ### Basic Image Generation
 
 1. Add a **Pollinations** node to your workflow
-2. Select your Pollinations API credentials
-3. Enter a prompt like "A beautiful sunset over mountains"
-4. Select a model (e.g., Flux)
-5. Execute the node
+2. Select **Generate Image** operation
+3. Select your Pollinations API credentials
+4. Enter a prompt like "A beautiful sunset over mountains"
+5. Select a model (e.g., Flux)
+6. Execute the node
 
 The output will be a binary image that you can:
 - Save to disk using the **Write Binary File** node
@@ -121,12 +132,17 @@ The output will be a binary image that you can:
 - Send via email or messaging platforms
 - Process with other image manipulation nodes
 
-### Using with Seed for Reproducibility
+### Basic Text Generation
 
-Set the same `seed` value to generate identical images with the same prompt and settings. This is useful for:
-- A/B testing different prompts
-- Creating variations with consistent style
-- Debugging and comparison
+1. Add a **Pollinations** node to your workflow
+2. Select **Generate Text** operation
+3. Select your Pollinations API credentials
+4. Enter a prompt like "Explain quantum computing in simple terms"
+5. Optionally add a system prompt to define AI behavior
+6. Select a model (e.g., OpenAI)
+7. Execute the node
+
+The output will be a JSON object with the generated text and metadata.
 
 ## Compatibility
 
@@ -139,14 +155,6 @@ Set the same `seed` value to generate identical images with the same prompt and 
 - [n8n Community Nodes Documentation](https://docs.n8n.io/integrations/community-nodes/)
 - [Report Issues](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/issues)
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
 ## License
 
 [MIT](LICENSE)
-
-## Author
-
-**Juanjo Garcia** - [@new-xmon-df](https://github.com/new-xmon-df)

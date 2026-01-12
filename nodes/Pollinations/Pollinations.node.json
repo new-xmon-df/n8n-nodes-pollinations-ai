@@ -2,7 +2,7 @@
 	"node": "n8n-nodes-pollinations-ai.pollinations",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
-	"categories": ["AI"],
+	"categories": ["Utility"],
 	"resources": {
 		"credentialDocumentation": [
 			{
@@ -15,8 +15,5 @@
 			}
 		]
 	},
-	"alias": ["image", "ai", "generation", "flux", "art"],
-	"subcategories": {
-		"AI": ["Image"]
-	}
+	"alias": ["image", "ai", "generation", "flux", "art", "text", "llm", "chat", "pollinations", "image generation", "text generation", "artificial intelligence", "gpt", "claude", "mistral", "deepseek"]
 }
