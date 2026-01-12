@@ -284,10 +284,26 @@ export class Pollinations implements INodeType {
 								!model.output_modalities?.includes('video'),
 						);
 
-						return imageModels.map((model: { name: string; description: string }) => ({
-							name: model.description || model.name,
-							value: model.name,
-						}));
+						return imageModels.map(
+							(model: {
+								name: string;
+								description: string;
+								pricing?: { completionImageTokens?: number };
+							}) => {
+								let displayName = model.description || model.name;
+
+								// Add pricing info if available
+								if (model.pricing?.completionImageTokens) {
+									const imagesPerPollen = Math.floor(1 / model.pricing.completionImageTokens);
+									displayName += ` (~${imagesPerPollen.toLocaleString()} img/$)`;
+								}
+
+								return {
+									name: displayName,
+									value: model.name,
+								};
+							},
+						);
 					}
 
 					// Fallback if API fails
@@ -326,10 +342,26 @@ export class Pollinations implements INodeType {
 					});
 
 					if (Array.isArray(response)) {
-						return response.map((model: { name: string; description: string }) => ({
-							name: model.description || model.name,
-							value: model.name,
-						}));
+						return response.map(
+							(model: {
+								name: string;
+								description: string;
+								pricing?: { completionTextTokens?: number };
+							}) => {
+								let displayName = model.description || model.name;
+
+								// Add pricing info if available (cost per 1M output tokens)
+								if (model.pricing?.completionTextTokens) {
+									const costPerMillion = model.pricing.completionTextTokens * 1_000_000;
+									displayName += ` ($${costPerMillion.toFixed(2)}/1M tok)`;
+								}
+
+								return {
+									name: displayName,
+									value: model.name,
+								};
+							},
+						);
 					}
 
 					// Fallback if API fails
@@ -381,6 +413,10 @@ export class Pollinations implements INodeType {
 					safe?: boolean;
 				};
 
+				// Get credentials
+				const credentials = await this.getCredentials('pollinationsApi');
+				const apiKey = credentials.apiKey as string;
+
 				// Build query parameters
 				const queryParams: Record<string, string> = {
 					model,
@@ -414,10 +450,13 @@ export class Pollinations implements INodeType {
 				// Record start time
 				const startTime = Date.now();
 
-				// Make the request
+				// Make the request with authentication
 				const response = await this.helpers.httpRequest({
 					method: 'GET',
 					url: fullUrl,
+					headers: {
+						Authorization: `Bearer ${apiKey}`,
+					},
 					encoding: 'arraybuffer',
 					returnFullResponse: true,
 				});
