@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-pollinations-ai",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "n8n community node for Pollinations AI - image generation and chat models",
 	"keywords": [
 		"n8n-community-node-package",

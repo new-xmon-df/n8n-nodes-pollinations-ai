@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.2.0...1.2.1) (2026-01-18)
+
+### 🐛 Bug Fixes
+
+* **config:** add context7 configuration file ([002379d](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/002379d69524f06e63abf3eeeb86d9f63ea55c47))
+
+### 📚 Documentation
+
+* **readme:** add Generate with Reference and Chat Model documentation ([5da4cde](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/5da4cdef6f642fe2a82555f105d71e1d4914a998))
+
 ## [1.2.0](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.1.0...1.2.0) (2026-01-18)
 
 ### ✨ Features
