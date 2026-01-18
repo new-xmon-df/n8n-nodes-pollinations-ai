@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.1.0...1.2.0) (2026-01-18)
+
+### ✨ Features
+
+* **image:** add Generate with Reference operation ([29a8faa](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/29a8faa28dc5f124d8b4a1201f2ff6b12391fa56))
+
+### 📚 Documentation
+
+* **text:** add HTTP 431 issue analysis and fix plan ([249a7fd](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/249a7fdd7c19111363e9c898c90acd1c82537157))
+
 ## [1.1.0](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.0.0...1.1.0) (2026-01-12)
 
 ### ✨ Features
