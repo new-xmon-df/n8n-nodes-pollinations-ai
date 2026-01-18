@@ -16,7 +16,16 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 2. Select **Install**
 3. Enter `n8n-nodes-pollinations-ai` and confirm
 
-## Operations
+## Nodes
+
+This package includes two nodes:
+
+| Node | Description |
+|------|-------------|
+| **Pollinations** | Main node for image and text generation |
+| **Pollinations Chat Model** | Sub-node for AI Agent integration |
+
+## Operations (Pollinations Node)
 
 ### Generate Image
 
@@ -40,6 +49,37 @@ Generate an image from a text prompt using Pollinations AI.
 | Enhance Prompt | false | Automatically enhance the prompt |
 | Safe Mode | false | Enable content safety filter |
 
+### Generate with Reference
+
+Generate an image using a reference image (image-to-image). Only models supporting image input are shown.
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| Prompt | Yes | Text describing how to transform or use the reference image |
+| Reference Image URL | Yes | URL of the reference image (must be publicly accessible) |
+| Model | Yes | The model to use (only models with image input support) |
+
+**Advanced Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| Width | 1024 | Width of the generated image (64-2048) |
+| Height | 1024 | Height of the generated image (64-2048) |
+| Seed | 0 | Seed for reproducible generation (0 = random) |
+| No Logo | false | Remove the Pollinations watermark |
+| Enhance Prompt | false | Automatically enhance the prompt |
+| Safe Mode | false | Enable content safety filter |
+
+**Supported Models:**
+
+Models are filtered dynamically from the API. Common models supporting reference images include:
+- FLUX.1 Kontext
+- NanoBanana / NanoBanana Pro
+- Seedream 4.0
+- GPT Image
+
 ### Generate Text
 
 Generate text from a prompt using AI language models.
@@ -59,6 +99,41 @@ Generate text from a prompt using AI language models.
 |--------|---------|-------------|
 | JSON Response | false | Force the response in JSON format (not supported by all models) |
 | Seed | -1 | Seed for reproducible results (-1 = random) |
+
+## Pollinations Chat Model (Sub-node)
+
+A sub-node designed for use with **AI Agents** and **LLM Chains** in n8n. This node provides a language model that can be connected to AI workflow nodes.
+
+### Use Cases
+
+- Connect to **AI Agent** nodes for conversational AI workflows
+- Use with **LLM Chain** nodes for text processing pipelines
+- Build custom AI assistants using n8n's AI capabilities
+
+### Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| Model | Yes | The chat model to use (loaded dynamically from API) |
+| Temperature | Yes | Controls randomness: 0 = deterministic, 2 = very creative (default: 1) |
+
+### Advanced Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| Max Tokens | 0 | Maximum tokens in response (0 = model default) |
+| Top P | 1 | Nucleus sampling parameter (0-1) |
+| Frequency Penalty | 0 | Reduce repetition of token sequences (-2 to 2) |
+| Presence Penalty | 0 | Increase likelihood of new topics (-2 to 2) |
+| Timeout | 60000 | Request timeout in milliseconds |
+
+### How to Use
+
+1. Add an **AI Agent** or **LLM Chain** node to your workflow
+2. Add a **Pollinations Chat Model** node
+3. Connect the Chat Model output to the Agent/Chain model input
+4. Configure your Pollinations API credentials
+5. Select a model and adjust parameters as needed
 
 ## Credentials
 
@@ -132,6 +207,22 @@ The output will be a binary image that you can:
 - Send via email or messaging platforms
 - Process with other image manipulation nodes
 
+### Image-to-Image with Reference
+
+1. Add a **Pollinations** node to your workflow
+2. Select **Generate with Reference** operation
+3. Select your Pollinations API credentials
+4. Enter a prompt like "Transform into a watercolor painting"
+5. Enter the URL of your reference image
+6. Select a model (e.g., Kontext)
+7. Execute the node
+
+Use cases for reference images:
+- **Style transfer**: Apply artistic styles to existing images
+- **Consistent characters**: Generate variations of a character for tutorials
+- **Image editing**: Modify specific aspects of an image with text prompts
+- **Product variations**: Create different versions of product images
+
 ### Basic Text Generation
 
 1. Add a **Pollinations** node to your workflow
@@ -143,6 +234,18 @@ The output will be a binary image that you can:
 7. Execute the node
 
 The output will be a JSON object with the generated text and metadata.
+
+### AI Agent Integration
+
+1. Add an **AI Agent** node to your workflow
+2. Add a **Pollinations Chat Model** node
+3. Connect the Chat Model to the Agent's model input
+4. Configure your Pollinations API credentials on the Chat Model
+5. Select a model (e.g., OpenAI, Claude, or DeepSeek)
+6. Add tools to your Agent as needed
+7. Execute the workflow
+
+This setup allows you to build conversational AI assistants powered by Pollinations models.
 
 ## Compatibility
 
