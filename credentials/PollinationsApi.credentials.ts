@@ -8,6 +8,7 @@ import {
 export class PollinationsApi implements ICredentialType {
 	name = 'pollinationsApi';
 	displayName = 'Pollinations API';
+	icon = 'file:pollinations.svg' as const;
 	documentationUrl = 'https://github.com/new-xmon-df/n8n-nodes-pollinations-ai#credentials';
 
 	properties: INodeProperties[] = [

@@ -1,12 +1,103 @@
 import {
 	IExecuteFunctions,
 	ILoadOptionsFunctions,
+	INode,
 	INodeExecutionData,
 	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
 	NodeOperationError,
 } from 'n8n-workflow';
+
+/**
+ * Handle HTTP errors from Pollinations API with user-friendly messages
+ */
+function handlePollinationsError(
+	error: unknown,
+	node: INode,
+	itemIndex: number,
+	context?: string,
+): never {
+	const httpError = error as { response?: { status?: number }; message?: string };
+	const status = httpError.response?.status;
+
+	switch (status) {
+		case 400:
+			throw new NodeOperationError(
+				node,
+				`Invalid request: ${httpError.message || 'Check your input parameters'}`,
+				{ itemIndex },
+			);
+		case 401:
+			throw new NodeOperationError(
+				node,
+				'Authentication failed. Please check your API key is valid.',
+				{ itemIndex },
+			);
+		case 403:
+			if (context === 'balance') {
+				throw new NodeOperationError(
+					node,
+					'API key does not have "Balance" permission. Please generate a new API key at https://enter.pollinations.ai with the "Balance" permission enabled.',
+					{ itemIndex },
+				);
+			}
+			throw new NodeOperationError(
+				node,
+				'Permission denied. Your API key may not have the required permissions for this operation.',
+				{ itemIndex },
+			);
+		case 429:
+			throw new NodeOperationError(
+				node,
+				'Rate limit exceeded. Please wait a moment before trying again.',
+				{ itemIndex },
+			);
+		case 500:
+		case 502:
+		case 503:
+			throw new NodeOperationError(
+				node,
+				'Pollinations API is temporarily unavailable. Please try again later.',
+				{ itemIndex },
+			);
+		default:
+			throw error;
+	}
+}
+
+async function checkMinimumBalance(
+	context: IExecuteFunctions,
+	minimumBalance: number,
+	itemIndex: number,
+): Promise<void> {
+	if (minimumBalance <= 0) return;
+
+	const credentials = await context.getCredentials('pollinationsApi');
+	const apiKey = credentials.apiKey as string;
+
+	let response;
+	try {
+		response = await context.helpers.httpRequest({
+			method: 'GET',
+			url: 'https://gen.pollinations.ai/account/balance',
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+			},
+		});
+	} catch (error: unknown) {
+		handlePollinationsError(error, context.getNode(), itemIndex, 'balance');
+	}
+
+	const currentBalance = response.balance as number;
+	if (currentBalance < minimumBalance) {
+		throw new NodeOperationError(
+			context.getNode(),
+			`Insufficient balance: ${currentBalance} pollens available, ${minimumBalance} required`,
+			{ itemIndex },
+		);
+	}
+}
 
 export class Pollinations implements INodeType {
 	description: INodeTypeDescription = {
@@ -54,6 +145,12 @@ export class Pollinations implements INodeType {
 						description: 'Generate text from a prompt using AI',
 						action: 'Generate text from a prompt',
 					},
+					{
+						name: 'Get Balance',
+						value: 'getBalance',
+						description: 'Get current pollen balance from your account',
+						action: 'Get current pollen balance',
+					},
 				],
 				default: 'generateImage',
 			},
@@ -80,10 +177,10 @@ export class Pollinations implements INodeType {
 
 			// Model (Image) - Dynamic loading
 			{
-				displayName: 'Model',
+				displayName: 'Model Name or ID',
 				name: 'model',
 				type: 'options',
-				default: 'flux',
+				default: '',
 				displayOptions: {
 					show: {
 						operation: ['generateImage'],
@@ -92,7 +189,7 @@ export class Pollinations implements INodeType {
 				typeOptions: {
 					loadOptionsMethod: 'getImageModels',
 				},
-				description: 'The model to use for image generation',
+				description: 'The model to use for image generation. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 
 			// Advanced Options (Image)
@@ -109,15 +206,11 @@ export class Pollinations implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Width',
-						name: 'width',
-						type: 'number',
-						default: 1024,
-						description: 'Width of the generated image in pixels',
-						typeOptions: {
-							minValue: 64,
-							maxValue: 2048,
-						},
+						displayName: 'Enhance Prompt',
+						name: 'enhance',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to automatically enhance the prompt for better results',
 					},
 					{
 						displayName: 'Height',
@@ -131,11 +224,15 @@ export class Pollinations implements INodeType {
 						},
 					},
 					{
-						displayName: 'Seed',
-						name: 'seed',
+						displayName: 'Minimum Balance',
+						name: 'minimumBalance',
 						type: 'number',
 						default: 0,
-						description: 'Seed for reproducible generation. Use 0 for random.',
+						description:
+							'Minimum pollen balance required to execute. Set to 0 to disable check.',
+						typeOptions: {
+							minValue: 0,
+						},
 					},
 					{
 						displayName: 'No Logo',
@@ -145,18 +242,29 @@ export class Pollinations implements INodeType {
 						description: 'Whether to remove the Pollinations watermark',
 					},
 					{
-						displayName: 'Enhance Prompt',
-						name: 'enhance',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to automatically enhance the prompt for better results',
-					},
-					{
 						displayName: 'Safe Mode',
 						name: 'safe',
 						type: 'boolean',
 						default: false,
 						description: 'Whether to enable content safety filter',
+					},
+					{
+						displayName: 'Seed',
+						name: 'seed',
+						type: 'number',
+						default: 0,
+						description: 'Seed for reproducible generation. Use 0 for random.',
+					},
+					{
+						displayName: 'Width',
+						name: 'width',
+						type: 'number',
+						default: 1024,
+						description: 'Width of the generated image in pixels',
+						typeOptions: {
+							minValue: 64,
+							maxValue: 2048,
+						},
 					},
 				],
 			},
@@ -199,10 +307,10 @@ export class Pollinations implements INodeType {
 
 			// Model (Reference) - Dynamic loading with image input support
 			{
-				displayName: 'Model',
+				displayName: 'Model Name or ID',
 				name: 'referenceModel',
 				type: 'options',
-				default: 'kontext',
+				default: '',
 				displayOptions: {
 					show: {
 						operation: ['generateImageWithReference'],
@@ -211,7 +319,7 @@ export class Pollinations implements INodeType {
 				typeOptions: {
 					loadOptionsMethod: 'getImageModelsWithReferenceSupport',
 				},
-				description: 'The model to use. Only models supporting image input are shown.',
+				description: 'The model to use. Only models supporting image input are shown. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 
 			// Advanced Options (Reference)
@@ -228,15 +336,11 @@ export class Pollinations implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Width',
-						name: 'width',
-						type: 'number',
-						default: 1024,
-						description: 'Width of the generated image in pixels',
-						typeOptions: {
-							minValue: 64,
-							maxValue: 2048,
-						},
+						displayName: 'Enhance Prompt',
+						name: 'enhance',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to automatically enhance the prompt for better results',
 					},
 					{
 						displayName: 'Height',
@@ -250,11 +354,15 @@ export class Pollinations implements INodeType {
 						},
 					},
 					{
-						displayName: 'Seed',
-						name: 'seed',
+						displayName: 'Minimum Balance',
+						name: 'minimumBalance',
 						type: 'number',
 						default: 0,
-						description: 'Seed for reproducible generation. Use 0 for random.',
+						description:
+							'Minimum pollen balance required to execute. Set to 0 to disable check.',
+						typeOptions: {
+							minValue: 0,
+						},
 					},
 					{
 						displayName: 'No Logo',
@@ -264,18 +372,29 @@ export class Pollinations implements INodeType {
 						description: 'Whether to remove the Pollinations watermark',
 					},
 					{
-						displayName: 'Enhance Prompt',
-						name: 'enhance',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to automatically enhance the prompt for better results',
-					},
-					{
 						displayName: 'Safe Mode',
 						name: 'safe',
 						type: 'boolean',
 						default: false,
 						description: 'Whether to enable content safety filter',
+					},
+					{
+						displayName: 'Seed',
+						name: 'seed',
+						type: 'number',
+						default: 0,
+						description: 'Seed for reproducible generation. Use 0 for random.',
+					},
+					{
+						displayName: 'Width',
+						name: 'width',
+						type: 'number',
+						default: 1024,
+						description: 'Width of the generated image in pixels',
+						typeOptions: {
+							minValue: 64,
+							maxValue: 2048,
+						},
 					},
 				],
 			},
@@ -302,10 +421,10 @@ export class Pollinations implements INodeType {
 
 			// Model (Text) - Dynamic loading
 			{
-				displayName: 'Model',
+				displayName: 'Model Name or ID',
 				name: 'textModel',
 				type: 'options',
-				default: 'openai',
+				default: '',
 				displayOptions: {
 					show: {
 						operation: ['generateText'],
@@ -314,7 +433,7 @@ export class Pollinations implements INodeType {
 				typeOptions: {
 					loadOptionsMethod: 'getTextModels',
 				},
-				description: 'The AI model to use for text generation',
+				description: 'The AI model to use for text generation. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 
 			// System Prompt (Text)
@@ -376,6 +495,17 @@ export class Pollinations implements INodeType {
 							'Whether to force the response in JSON format. Not supported by all models.',
 					},
 					{
+						displayName: 'Minimum Balance',
+						name: 'minimumBalance',
+						type: 'number',
+						default: 0,
+						description:
+							'Minimum pollen balance required to execute. Set to 0 to disable check.',
+						typeOptions: {
+							minValue: 0,
+						},
+					},
+					{
 						displayName: 'Seed',
 						name: 'seed',
 						type: 'number',
@@ -385,6 +515,7 @@ export class Pollinations implements INodeType {
 				],
 			},
 		],
+		usableAsTool: true,
 	};
 
 	methods = {
@@ -597,9 +728,34 @@ export class Pollinations implements INodeType {
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
+		const operation = this.getNodeParameter('operation', 0) as string;
+
+		// Handle account operations outside the loop (they don't depend on input items)
+		if (operation === 'getBalance') {
+			const credentials = await this.getCredentials('pollinationsApi');
+			const apiKey = credentials.apiKey as string;
+
+			let response;
+			try {
+				response = await this.helpers.httpRequest({
+					method: 'GET',
+					url: 'https://gen.pollinations.ai/account/balance',
+					headers: {
+						Authorization: `Bearer ${apiKey}`,
+					},
+				});
+			} catch (error: unknown) {
+				handlePollinationsError(error, this.getNode(), 0, 'balance');
+			}
+
+			returnData.push({
+				json: response,
+			});
+
+			return [returnData];
+		}
 
 		for (let i = 0; i < items.length; i++) {
-			const operation = this.getNodeParameter('operation', i) as string;
 
 			if (operation === 'generateImage') {
 				const prompt = this.getNodeParameter('prompt', i) as string;
@@ -611,7 +767,12 @@ export class Pollinations implements INodeType {
 					nologo?: boolean;
 					enhance?: boolean;
 					safe?: boolean;
+					minimumBalance?: number;
 				};
+
+				// Check minimum balance if configured
+				const minimumBalance = options.minimumBalance || 0;
+				await checkMinimumBalance(this, minimumBalance, i);
 
 				// Get credentials
 				const credentials = await this.getCredentials('pollinationsApi');
@@ -651,15 +812,20 @@ export class Pollinations implements INodeType {
 				const startTime = Date.now();
 
 				// Make the request with authentication
-				const response = await this.helpers.httpRequest({
-					method: 'GET',
-					url: fullUrl,
-					headers: {
-						Authorization: `Bearer ${apiKey}`,
-					},
-					encoding: 'arraybuffer',
-					returnFullResponse: true,
-				});
+				let response;
+				try {
+					response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: fullUrl,
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+						encoding: 'arraybuffer',
+						returnFullResponse: true,
+					});
+				} catch (error: unknown) {
+					handlePollinationsError(error, this.getNode(), i, 'image');
+				}
 
 				// Calculate duration
 				const duration = Date.now() - startTime;
@@ -709,8 +875,13 @@ export class Pollinations implements INodeType {
 				const textOptions = this.getNodeParameter('textOptions', i, {}) as {
 					jsonMode?: boolean;
 					seed?: number;
+					minimumBalance?: number;
 				};
 				const jsonMode = textOptions.jsonMode || false;
+
+				// Check minimum balance if configured
+				const minimumBalance = textOptions.minimumBalance || 0;
+				await checkMinimumBalance(this, minimumBalance, i);
 
 				// Get credentials
 				const credentials = await this.getCredentials('pollinationsApi');
@@ -742,14 +913,19 @@ export class Pollinations implements INodeType {
 				const startTime = Date.now();
 
 				// Make the request with authentication
-				const response = await this.helpers.httpRequest({
-					method: 'GET',
-					url: fullUrl,
-					headers: {
-						Authorization: `Bearer ${apiKey}`,
-					},
-					returnFullResponse: true,
-				});
+				let response;
+				try {
+					response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: fullUrl,
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+						returnFullResponse: true,
+					});
+				} catch (error: unknown) {
+					handlePollinationsError(error, this.getNode(), i, 'text');
+				}
 
 				// Calculate duration
 				const duration = Date.now() - startTime;
@@ -803,7 +979,12 @@ export class Pollinations implements INodeType {
 					nologo?: boolean;
 					enhance?: boolean;
 					safe?: boolean;
+					minimumBalance?: number;
 				};
+
+				// Check minimum balance if configured
+				const minimumBalance = options.minimumBalance || 0;
+				await checkMinimumBalance(this, minimumBalance, i);
 
 				// Validate reference image URL
 				try {
@@ -855,15 +1036,20 @@ export class Pollinations implements INodeType {
 				const startTime = Date.now();
 
 				// Make the request with authentication
-				const response = await this.helpers.httpRequest({
-					method: 'GET',
-					url: fullUrl,
-					headers: {
-						Authorization: `Bearer ${apiKey}`,
-					},
-					encoding: 'arraybuffer',
-					returnFullResponse: true,
-				});
+				let response;
+				try {
+					response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: fullUrl,
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+						encoding: 'arraybuffer',
+						returnFullResponse: true,
+					});
+				} catch (error: unknown) {
+					handlePollinationsError(error, this.getNode(), i, 'image');
+				}
 
 				// Calculate duration
 				const duration = Date.now() - startTime;

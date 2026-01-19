@@ -45,14 +45,14 @@ export class PollinationsChatModel implements INodeType {
 		properties: [
 			// Model - dynamic loading
 			{
-				displayName: 'Model',
+				displayName: 'Model Name or ID',
 				name: 'model',
 				type: 'options',
-				default: 'openai',
+				default: '',
 				typeOptions: {
 					loadOptionsMethod: 'getChatModels',
 				},
-				description: 'The model to use for chat completions',
+				description: 'The model to use for chat completions. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			// Temperature
 			{
@@ -76,28 +76,6 @@ export class PollinationsChatModel implements INodeType {
 				default: {},
 				options: [
 					{
-						displayName: 'Max Tokens',
-						name: 'maxTokens',
-						type: 'number',
-						default: 0,
-						description: 'Maximum tokens in response. 0 uses model default.',
-						typeOptions: {
-							minValue: 0,
-						},
-					},
-					{
-						displayName: 'Top P',
-						name: 'topP',
-						type: 'number',
-						default: 1,
-						typeOptions: {
-							minValue: 0,
-							maxValue: 1,
-							numberPrecision: 2,
-						},
-						description: 'Nucleus sampling: consider tokens with top_p probability mass',
-					},
-					{
 						displayName: 'Frequency Penalty',
 						name: 'frequencyPenalty',
 						type: 'number',
@@ -108,6 +86,16 @@ export class PollinationsChatModel implements INodeType {
 							numberPrecision: 1,
 						},
 						description: 'Reduce repetition of token sequences. Higher values decrease repetition.',
+					},
+					{
+						displayName: 'Max Tokens',
+						name: 'maxTokens',
+						type: 'number',
+						default: 0,
+						description: 'Maximum tokens in response. 0 uses model default.',
+						typeOptions: {
+							minValue: 0,
+						},
 					},
 					{
 						displayName: 'Presence Penalty',
@@ -131,9 +119,22 @@ export class PollinationsChatModel implements INodeType {
 						},
 						description: 'Request timeout in milliseconds',
 					},
+					{
+						displayName: 'Top P',
+						name: 'topP',
+						type: 'number',
+						default: 1,
+						typeOptions: {
+							minValue: 0,
+							maxValue: 1,
+							numberPrecision: 2,
+						},
+						description: 'Nucleus sampling: consider tokens with top_p probability mass',
+					},
 				],
 			},
 		],
+		usableAsTool: true,
 	};
 
 	methods = {
