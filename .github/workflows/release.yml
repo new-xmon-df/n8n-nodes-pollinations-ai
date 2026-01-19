@@ -38,6 +38,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Install semantic-release plugins
+        run: npm install --no-save @semantic-release/changelog @semantic-release/git conventional-changelog-conventionalcommits
+
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
