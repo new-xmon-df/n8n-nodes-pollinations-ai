@@ -8,6 +8,34 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 
+async function checkMinimumBalance(
+	context: IExecuteFunctions,
+	minimumBalance: number,
+	itemIndex: number,
+): Promise<void> {
+	if (minimumBalance <= 0) return;
+
+	const credentials = await context.getCredentials('pollinationsApi');
+	const apiKey = credentials.apiKey as string;
+
+	const response = await context.helpers.httpRequest({
+		method: 'GET',
+		url: 'https://gen.pollinations.ai/account/balance',
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+		},
+	});
+
+	const currentBalance = response.balance as number;
+	if (currentBalance < minimumBalance) {
+		throw new NodeOperationError(
+			context.getNode(),
+			`Insufficient balance: ${currentBalance} pollens available, ${minimumBalance} required`,
+			{ itemIndex },
+		);
+	}
+}
+
 export class Pollinations implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Pollinations',
@@ -53,6 +81,12 @@ export class Pollinations implements INodeType {
 						value: 'generateText',
 						description: 'Generate text from a prompt using AI',
 						action: 'Generate text from a prompt',
+					},
+					{
+						name: 'Get Balance',
+						value: 'getBalance',
+						description: 'Get current pollen balance from your account',
+						action: 'Get current pollen balance',
 					},
 				],
 				default: 'generateImage',
@@ -124,6 +158,17 @@ export class Pollinations implements INodeType {
 						typeOptions: {
 							minValue: 64,
 							maxValue: 2048,
+						},
+					},
+					{
+						displayName: 'Minimum Balance',
+						name: 'minimumBalance',
+						type: 'number',
+						default: 0,
+						description:
+							'Minimum pollen balance required to execute. Set to 0 to disable check.',
+						typeOptions: {
+							minValue: 0,
 						},
 					},
 					{
@@ -243,6 +288,17 @@ export class Pollinations implements INodeType {
 						typeOptions: {
 							minValue: 64,
 							maxValue: 2048,
+						},
+					},
+					{
+						displayName: 'Minimum Balance',
+						name: 'minimumBalance',
+						type: 'number',
+						default: 0,
+						description:
+							'Minimum pollen balance required to execute. Set to 0 to disable check.',
+						typeOptions: {
+							minValue: 0,
 						},
 					},
 					{
@@ -374,6 +430,17 @@ export class Pollinations implements INodeType {
 						default: false,
 						description:
 							'Whether to force the response in JSON format. Not supported by all models.',
+					},
+					{
+						displayName: 'Minimum Balance',
+						name: 'minimumBalance',
+						type: 'number',
+						default: 0,
+						description:
+							'Minimum pollen balance required to execute. Set to 0 to disable check.',
+						typeOptions: {
+							minValue: 0,
+						},
 					},
 					{
 						displayName: 'Seed',
@@ -612,7 +679,12 @@ export class Pollinations implements INodeType {
 					nologo?: boolean;
 					enhance?: boolean;
 					safe?: boolean;
+					minimumBalance?: number;
 				};
+
+				// Check minimum balance if configured
+				const minimumBalance = options.minimumBalance || 0;
+				await checkMinimumBalance(this, minimumBalance, i);
 
 				// Get credentials
 				const credentials = await this.getCredentials('pollinationsApi');
@@ -710,8 +782,13 @@ export class Pollinations implements INodeType {
 				const textOptions = this.getNodeParameter('textOptions', i, {}) as {
 					jsonMode?: boolean;
 					seed?: number;
+					minimumBalance?: number;
 				};
 				const jsonMode = textOptions.jsonMode || false;
+
+				// Check minimum balance if configured
+				const minimumBalance = textOptions.minimumBalance || 0;
+				await checkMinimumBalance(this, minimumBalance, i);
 
 				// Get credentials
 				const credentials = await this.getCredentials('pollinationsApi');
@@ -804,7 +881,12 @@ export class Pollinations implements INodeType {
 					nologo?: boolean;
 					enhance?: boolean;
 					safe?: boolean;
+					minimumBalance?: number;
 				};
+
+				// Check minimum balance if configured
+				const minimumBalance = options.minimumBalance || 0;
+				await checkMinimumBalance(this, minimumBalance, i);
 
 				// Validate reference image URL
 				try {
@@ -904,6 +986,23 @@ export class Pollinations implements INodeType {
 					binary: {
 						data: binaryData,
 					},
+				});
+			}
+
+			if (operation === 'getBalance') {
+				const credentials = await this.getCredentials('pollinationsApi');
+				const apiKey = credentials.apiKey as string;
+
+				const response = await this.helpers.httpRequest({
+					method: 'GET',
+					url: 'https://gen.pollinations.ai/account/balance',
+					headers: {
+						Authorization: `Bearer ${apiKey}`,
+					},
+				});
+
+				returnData.push({
+					json: response,
 				});
 			}
 		}
