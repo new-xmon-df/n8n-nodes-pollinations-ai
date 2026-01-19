@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.3.0...1.3.1) (2026-01-19)
+
+### 🐛 Bug Fixes
+
+* **docs:** add Get Balance and Minimum Balance documentation ([c898342](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/c898342ebdecceef90c8bd4bb7c2f49be4199dc2))
+
 ## [1.3.0](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.2.1...1.3.0) (2026-01-19)
 
 ### ✨ Features
