@@ -728,9 +728,34 @@ export class Pollinations implements INodeType {
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
+		const operation = this.getNodeParameter('operation', 0) as string;
+
+		// Handle account operations outside the loop (they don't depend on input items)
+		if (operation === 'getBalance') {
+			const credentials = await this.getCredentials('pollinationsApi');
+			const apiKey = credentials.apiKey as string;
+
+			let response;
+			try {
+				response = await this.helpers.httpRequest({
+					method: 'GET',
+					url: 'https://gen.pollinations.ai/account/balance',
+					headers: {
+						Authorization: `Bearer ${apiKey}`,
+					},
+				});
+			} catch (error: unknown) {
+				handlePollinationsError(error, this.getNode(), 0, 'balance');
+			}
+
+			returnData.push({
+				json: response,
+			});
+
+			return [returnData];
+		}
 
 		for (let i = 0; i < items.length; i++) {
-			const operation = this.getNodeParameter('operation', i) as string;
 
 			if (operation === 'generateImage') {
 				const prompt = this.getNodeParameter('prompt', i) as string;
@@ -1064,28 +1089,6 @@ export class Pollinations implements INodeType {
 					binary: {
 						data: binaryData,
 					},
-				});
-			}
-
-			if (operation === 'getBalance') {
-				const credentials = await this.getCredentials('pollinationsApi');
-				const apiKey = credentials.apiKey as string;
-
-				let response;
-				try {
-					response = await this.helpers.httpRequest({
-						method: 'GET',
-						url: 'https://gen.pollinations.ai/account/balance',
-						headers: {
-							Authorization: `Bearer ${apiKey}`,
-						},
-					});
-				} catch (error: unknown) {
-					handlePollinationsError(error, this.getNode(), i, 'balance');
-				}
-
-				returnData.push({
-					json: response,
 				});
 			}
 		}
