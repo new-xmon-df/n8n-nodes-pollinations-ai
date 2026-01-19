@@ -1,12 +1,70 @@
 import {
 	IExecuteFunctions,
 	ILoadOptionsFunctions,
+	INode,
 	INodeExecutionData,
 	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
 	NodeOperationError,
 } from 'n8n-workflow';
+
+/**
+ * Handle HTTP errors from Pollinations API with user-friendly messages
+ */
+function handlePollinationsError(
+	error: unknown,
+	node: INode,
+	itemIndex: number,
+	context?: string,
+): never {
+	const httpError = error as { response?: { status?: number }; message?: string };
+	const status = httpError.response?.status;
+
+	switch (status) {
+		case 400:
+			throw new NodeOperationError(
+				node,
+				`Invalid request: ${httpError.message || 'Check your input parameters'}`,
+				{ itemIndex },
+			);
+		case 401:
+			throw new NodeOperationError(
+				node,
+				'Authentication failed. Please check your API key is valid.',
+				{ itemIndex },
+			);
+		case 403:
+			if (context === 'balance') {
+				throw new NodeOperationError(
+					node,
+					'API key does not have "Balance" permission. Please generate a new API key at https://enter.pollinations.ai with the "Balance" permission enabled.',
+					{ itemIndex },
+				);
+			}
+			throw new NodeOperationError(
+				node,
+				'Permission denied. Your API key may not have the required permissions for this operation.',
+				{ itemIndex },
+			);
+		case 429:
+			throw new NodeOperationError(
+				node,
+				'Rate limit exceeded. Please wait a moment before trying again.',
+				{ itemIndex },
+			);
+		case 500:
+		case 502:
+		case 503:
+			throw new NodeOperationError(
+				node,
+				'Pollinations API is temporarily unavailable. Please try again later.',
+				{ itemIndex },
+			);
+		default:
+			throw error;
+	}
+}
 
 async function checkMinimumBalance(
 	context: IExecuteFunctions,
@@ -18,13 +76,18 @@ async function checkMinimumBalance(
 	const credentials = await context.getCredentials('pollinationsApi');
 	const apiKey = credentials.apiKey as string;
 
-	const response = await context.helpers.httpRequest({
-		method: 'GET',
-		url: 'https://gen.pollinations.ai/account/balance',
-		headers: {
-			Authorization: `Bearer ${apiKey}`,
-		},
-	});
+	let response;
+	try {
+		response = await context.helpers.httpRequest({
+			method: 'GET',
+			url: 'https://gen.pollinations.ai/account/balance',
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+			},
+		});
+	} catch (error: unknown) {
+		handlePollinationsError(error, context.getNode(), itemIndex, 'balance');
+	}
 
 	const currentBalance = response.balance as number;
 	if (currentBalance < minimumBalance) {
@@ -724,15 +787,20 @@ export class Pollinations implements INodeType {
 				const startTime = Date.now();
 
 				// Make the request with authentication
-				const response = await this.helpers.httpRequest({
-					method: 'GET',
-					url: fullUrl,
-					headers: {
-						Authorization: `Bearer ${apiKey}`,
-					},
-					encoding: 'arraybuffer',
-					returnFullResponse: true,
-				});
+				let response;
+				try {
+					response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: fullUrl,
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+						encoding: 'arraybuffer',
+						returnFullResponse: true,
+					});
+				} catch (error: unknown) {
+					handlePollinationsError(error, this.getNode(), i, 'image');
+				}
 
 				// Calculate duration
 				const duration = Date.now() - startTime;
@@ -820,14 +888,19 @@ export class Pollinations implements INodeType {
 				const startTime = Date.now();
 
 				// Make the request with authentication
-				const response = await this.helpers.httpRequest({
-					method: 'GET',
-					url: fullUrl,
-					headers: {
-						Authorization: `Bearer ${apiKey}`,
-					},
-					returnFullResponse: true,
-				});
+				let response;
+				try {
+					response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: fullUrl,
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+						returnFullResponse: true,
+					});
+				} catch (error: unknown) {
+					handlePollinationsError(error, this.getNode(), i, 'text');
+				}
 
 				// Calculate duration
 				const duration = Date.now() - startTime;
@@ -938,15 +1011,20 @@ export class Pollinations implements INodeType {
 				const startTime = Date.now();
 
 				// Make the request with authentication
-				const response = await this.helpers.httpRequest({
-					method: 'GET',
-					url: fullUrl,
-					headers: {
-						Authorization: `Bearer ${apiKey}`,
-					},
-					encoding: 'arraybuffer',
-					returnFullResponse: true,
-				});
+				let response;
+				try {
+					response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: fullUrl,
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+						encoding: 'arraybuffer',
+						returnFullResponse: true,
+					});
+				} catch (error: unknown) {
+					handlePollinationsError(error, this.getNode(), i, 'image');
+				}
 
 				// Calculate duration
 				const duration = Date.now() - startTime;
@@ -993,13 +1071,18 @@ export class Pollinations implements INodeType {
 				const credentials = await this.getCredentials('pollinationsApi');
 				const apiKey = credentials.apiKey as string;
 
-				const response = await this.helpers.httpRequest({
-					method: 'GET',
-					url: 'https://gen.pollinations.ai/account/balance',
-					headers: {
-						Authorization: `Bearer ${apiKey}`,
-					},
-				});
+				let response;
+				try {
+					response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: 'https://gen.pollinations.ai/account/balance',
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+					});
+				} catch (error: unknown) {
+					handlePollinationsError(error, this.getNode(), i, 'balance');
+				}
 
 				returnData.push({
 					json: response,
