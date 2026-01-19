@@ -80,10 +80,10 @@ export class Pollinations implements INodeType {
 
 			// Model (Image) - Dynamic loading
 			{
-				displayName: 'Model',
+				displayName: 'Model Name or ID',
 				name: 'model',
 				type: 'options',
-				default: 'flux',
+				default: '',
 				displayOptions: {
 					show: {
 						operation: ['generateImage'],
@@ -92,7 +92,7 @@ export class Pollinations implements INodeType {
 				typeOptions: {
 					loadOptionsMethod: 'getImageModels',
 				},
-				description: 'The model to use for image generation',
+				description: 'The model to use for image generation. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 
 			// Advanced Options (Image)
@@ -109,15 +109,11 @@ export class Pollinations implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Width',
-						name: 'width',
-						type: 'number',
-						default: 1024,
-						description: 'Width of the generated image in pixels',
-						typeOptions: {
-							minValue: 64,
-							maxValue: 2048,
-						},
+						displayName: 'Enhance Prompt',
+						name: 'enhance',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to automatically enhance the prompt for better results',
 					},
 					{
 						displayName: 'Height',
@@ -131,13 +127,6 @@ export class Pollinations implements INodeType {
 						},
 					},
 					{
-						displayName: 'Seed',
-						name: 'seed',
-						type: 'number',
-						default: 0,
-						description: 'Seed for reproducible generation. Use 0 for random.',
-					},
-					{
 						displayName: 'No Logo',
 						name: 'nologo',
 						type: 'boolean',
@@ -145,18 +134,29 @@ export class Pollinations implements INodeType {
 						description: 'Whether to remove the Pollinations watermark',
 					},
 					{
-						displayName: 'Enhance Prompt',
-						name: 'enhance',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to automatically enhance the prompt for better results',
-					},
-					{
 						displayName: 'Safe Mode',
 						name: 'safe',
 						type: 'boolean',
 						default: false,
 						description: 'Whether to enable content safety filter',
+					},
+					{
+						displayName: 'Seed',
+						name: 'seed',
+						type: 'number',
+						default: 0,
+						description: 'Seed for reproducible generation. Use 0 for random.',
+					},
+					{
+						displayName: 'Width',
+						name: 'width',
+						type: 'number',
+						default: 1024,
+						description: 'Width of the generated image in pixels',
+						typeOptions: {
+							minValue: 64,
+							maxValue: 2048,
+						},
 					},
 				],
 			},
@@ -199,10 +199,10 @@ export class Pollinations implements INodeType {
 
 			// Model (Reference) - Dynamic loading with image input support
 			{
-				displayName: 'Model',
+				displayName: 'Model Name or ID',
 				name: 'referenceModel',
 				type: 'options',
-				default: 'kontext',
+				default: '',
 				displayOptions: {
 					show: {
 						operation: ['generateImageWithReference'],
@@ -211,7 +211,7 @@ export class Pollinations implements INodeType {
 				typeOptions: {
 					loadOptionsMethod: 'getImageModelsWithReferenceSupport',
 				},
-				description: 'The model to use. Only models supporting image input are shown.',
+				description: 'The model to use. Only models supporting image input are shown. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 
 			// Advanced Options (Reference)
@@ -228,15 +228,11 @@ export class Pollinations implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Width',
-						name: 'width',
-						type: 'number',
-						default: 1024,
-						description: 'Width of the generated image in pixels',
-						typeOptions: {
-							minValue: 64,
-							maxValue: 2048,
-						},
+						displayName: 'Enhance Prompt',
+						name: 'enhance',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to automatically enhance the prompt for better results',
 					},
 					{
 						displayName: 'Height',
@@ -250,13 +246,6 @@ export class Pollinations implements INodeType {
 						},
 					},
 					{
-						displayName: 'Seed',
-						name: 'seed',
-						type: 'number',
-						default: 0,
-						description: 'Seed for reproducible generation. Use 0 for random.',
-					},
-					{
 						displayName: 'No Logo',
 						name: 'nologo',
 						type: 'boolean',
@@ -264,18 +253,29 @@ export class Pollinations implements INodeType {
 						description: 'Whether to remove the Pollinations watermark',
 					},
 					{
-						displayName: 'Enhance Prompt',
-						name: 'enhance',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to automatically enhance the prompt for better results',
-					},
-					{
 						displayName: 'Safe Mode',
 						name: 'safe',
 						type: 'boolean',
 						default: false,
 						description: 'Whether to enable content safety filter',
+					},
+					{
+						displayName: 'Seed',
+						name: 'seed',
+						type: 'number',
+						default: 0,
+						description: 'Seed for reproducible generation. Use 0 for random.',
+					},
+					{
+						displayName: 'Width',
+						name: 'width',
+						type: 'number',
+						default: 1024,
+						description: 'Width of the generated image in pixels',
+						typeOptions: {
+							minValue: 64,
+							maxValue: 2048,
+						},
 					},
 				],
 			},
@@ -302,10 +302,10 @@ export class Pollinations implements INodeType {
 
 			// Model (Text) - Dynamic loading
 			{
-				displayName: 'Model',
+				displayName: 'Model Name or ID',
 				name: 'textModel',
 				type: 'options',
-				default: 'openai',
+				default: '',
 				displayOptions: {
 					show: {
 						operation: ['generateText'],
@@ -314,7 +314,7 @@ export class Pollinations implements INodeType {
 				typeOptions: {
 					loadOptionsMethod: 'getTextModels',
 				},
-				description: 'The AI model to use for text generation',
+				description: 'The AI model to use for text generation. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 
 			// System Prompt (Text)
@@ -385,6 +385,7 @@ export class Pollinations implements INodeType {
 				],
 			},
 		],
+		usableAsTool: true,
 	};
 
 	methods = {
