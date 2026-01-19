@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.2.1...1.3.0) (2026-01-19)
+
+### ✨ Features
+
+* **account:** add balance check and minimum balance option ([a061a37](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/a061a3721bd6752bc28daeb890c4bbae24b076b9))
+
+### 🐛 Bug Fixes
+
+* **account:** move getBalance outside iteration loop ([17d3589](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/17d358987b69c68619581020265d5ccbdb86263a))
+* **errors:** add user-friendly error messages for API failures ([d95dffd](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/d95dffd53d12a4fc0ba9940d4616399ba8361a96))
+
+### ♻️ Refactoring
+
+* migrate to @n8n/node-cli and fix lint errors ([190d605](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/190d605faab9eb1d2677df3dfe82388f11a138b8))
+
+### 👷 CI/CD
+
+* **release:** install semantic-release plugins in workflow ([36999ec](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/36999ecf5907088366a8724b57a4103ae88e16cb))
+
 ## [1.2.1](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.2.0...1.2.1) (2026-01-18)
 
 ### 🐛 Bug Fixes
