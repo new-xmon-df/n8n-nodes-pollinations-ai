@@ -44,6 +44,7 @@ Generate an image from a text prompt using Pollinations AI.
 |--------|---------|-------------|
 | Width | 1024 | Width of the generated image (64-2048) |
 | Height | 1024 | Height of the generated image (64-2048) |
+| Minimum Balance | 0 | Minimum pollen balance required to execute (0 = disabled) |
 | Seed | 0 | Seed for reproducible generation (0 = random) |
 | No Logo | false | Remove the Pollinations watermark |
 | Enhance Prompt | false | Automatically enhance the prompt |
@@ -67,6 +68,7 @@ Generate an image using a reference image (image-to-image). Only models supporti
 |--------|---------|-------------|
 | Width | 1024 | Width of the generated image (64-2048) |
 | Height | 1024 | Height of the generated image (64-2048) |
+| Minimum Balance | 0 | Minimum pollen balance required to execute (0 = disabled) |
 | Seed | 0 | Seed for reproducible generation (0 = random) |
 | No Logo | false | Remove the Pollinations watermark |
 | Enhance Prompt | false | Automatically enhance the prompt |
@@ -98,7 +100,37 @@ Generate text from a prompt using AI language models.
 | Option | Default | Description |
 |--------|---------|-------------|
 | JSON Response | false | Force the response in JSON format (not supported by all models) |
+| Minimum Balance | 0 | Minimum pollen balance required to execute (0 = disabled) |
 | Seed | -1 | Seed for reproducible results (-1 = random) |
+
+### Get Balance
+
+Get the current pollen balance from your Pollinations account.
+
+**Output:**
+
+```json
+{
+  "balance": 1250.50
+}
+```
+
+This operation requires an API key with "Balance" permission enabled.
+
+## Balance Control
+
+All generation operations (Generate Image, Generate with Reference, Generate Text) include a **Minimum Balance** option in their advanced settings. This allows you to:
+
+- **Prevent unexpected costs**: Stop workflow execution if balance is too low
+- **Budget management**: Set thresholds for different workflows
+- **Error handling**: Get a clear error message instead of failed API calls
+
+When the current balance is below the minimum specified, the node throws an error:
+```
+Insufficient balance: 27.54 pollens available, 30 required
+```
+
+Set to `0` (default) to disable the balance check.
 
 ## Pollinations Chat Model (Sub-node)
 
