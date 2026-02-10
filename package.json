@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-pollinations-ai",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "n8n community node for Pollinations AI - image, text, speech and music generation",
   "keywords": [
     "n8n-community-node-package",

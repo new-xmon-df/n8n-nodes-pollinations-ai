@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.4.0...1.4.1) (2026-02-10)
+
+### 🐛 Bug Fixes
+
+* **docs:** add Generate Speech and Generate Music documentation ([e60242c](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/commit/e60242c66eea543fa3b4a82a1a0f3880e62b54f7))
+
 ## [1.4.0](https://github.com/new-xmon-df/n8n-nodes-pollinations-ai/compare/1.3.1...1.4.0) (2026-02-10)
 
 ### ✨ Features
