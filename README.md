@@ -1,8 +1,8 @@
 # n8n-nodes-pollinations-ai
 
-This is an n8n community node that lets you generate images and text using [Pollinations AI](https://pollinations.ai) in your n8n workflows.
+This is an n8n community node that lets you generate images, text, speech and music using [Pollinations AI](https://pollinations.ai) in your n8n workflows.
 
-[Pollinations](https://pollinations.ai) is an AI platform that provides access to various image and text generation models.
+[Pollinations](https://pollinations.ai) is an AI platform that provides access to various image, text and audio generation models.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
@@ -22,7 +22,7 @@ This package includes two nodes:
 
 | Node | Description |
 |------|-------------|
-| **Pollinations** | Main node for image and text generation |
+| **Pollinations** | Main node for image, text, speech and music generation |
 | **Pollinations Chat Model** | Sub-node for AI Agent integration |
 
 ## Operations (Pollinations Node)
@@ -103,6 +103,50 @@ Generate text from a prompt using AI language models.
 | Minimum Balance | 0 | Minimum pollen balance required to execute (0 = disabled) |
 | Seed | -1 | Seed for reproducible results (-1 = random) |
 
+### Generate Speech
+
+Convert text to speech using TTS (Text-to-Speech) models.
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| Text | Yes | The text to convert to speech |
+| Model | Yes | The TTS model to use (loaded dynamically from API) |
+| Voice | Yes | The voice to use for synthesis (loaded dynamically from API) |
+
+**Advanced Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| Response Format | MP3 | Audio format: AAC, FLAC, MP3, Opus, PCM, WAV |
+| Minimum Balance | 0 | Minimum pollen balance required to execute (0 = disabled) |
+
+The output is a binary audio file with metadata including request details and response info.
+
+### Generate Music
+
+Generate music from a text description.
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| Prompt | Yes | Description of the music to generate |
+| Model | Yes | The music model to use (loaded dynamically from API) |
+| Duration (Seconds) | Yes | Duration of the generated music (3-300, default: 30) |
+| Instrumental | No | Generate instrumental music only, no vocals (default: false) |
+
+**Advanced Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| Minimum Balance | 0 | Minimum pollen balance required to execute (0 = disabled) |
+
+The output is a binary MP3 audio file with metadata including request details and response info.
+
+> **Note**: Music generation does not support specific artist names in prompts. Describe the style instead (e.g., "Latin pop with Middle Eastern melodic influences" instead of naming an artist).
+
 ### Get Balance
 
 Get the current pollen balance from your Pollinations account.
@@ -119,7 +163,7 @@ This operation requires an API key with "Balance" permission enabled.
 
 ## Balance Control
 
-All generation operations (Generate Image, Generate with Reference, Generate Text) include a **Minimum Balance** option in their advanced settings. This allows you to:
+All generation operations (Generate Image, Generate with Reference, Generate Text, Generate Speech, Generate Music) include a **Minimum Balance** option in their advanced settings. This allows you to:
 
 - **Prevent unexpected costs**: Stop workflow execution if balance is too low
 - **Budget management**: Set thresholds for different workflows
@@ -212,7 +256,7 @@ The node automatically filters the model dropdown to show only the models your A
 
 ## Available Models
 
-Models are loaded dynamically from the Pollinations API, ensuring you always have access to the latest available models.
+Models are loaded dynamically from the Pollinations API, ensuring you always have access to the latest available models. Models that require a paid plan are marked with a **[Paid]** indicator in the dropdown.
 
 ### Image Models
 
@@ -221,6 +265,11 @@ Common models include Flux, Turbo, GPT Image, Kontext, Seedream, and more.
 ### Text Models
 
 Common models include OpenAI GPT-5, Claude, Gemini, DeepSeek, Mistral, and more.
+
+### Audio Models
+
+- **TTS (Text-to-Speech)**: ElevenLabs with 30+ voices (alloy, nova, rachel, adam, etc.)
+- **Music**: ElevenLabs Music for AI-generated music
 
 ## Example Usage
 
@@ -266,6 +315,34 @@ Use cases for reference images:
 7. Execute the node
 
 The output will be a JSON object with the generated text and metadata.
+
+### Text-to-Speech
+
+1. Add a **Pollinations** node to your workflow
+2. Select **Generate Speech** operation
+3. Select your Pollinations API credentials
+4. Enter the text to convert (e.g., "Welcome to our podcast")
+5. Select a model and voice (e.g., ElevenLabs + Nova)
+6. Optionally change the audio format in advanced options
+7. Execute the node
+
+The output will be a binary audio file that you can:
+- Save to disk using the **Write Binary File** node
+- Upload to cloud storage
+- Send via messaging platforms
+- Use in video/audio pipelines
+
+### Music Generation
+
+1. Add a **Pollinations** node to your workflow
+2. Select **Generate Music** operation
+3. Select your Pollinations API credentials
+4. Enter a description (e.g., "A calm piano melody with soft strings, ambient mood")
+5. Set the duration in seconds (3-300)
+6. Optionally enable **Instrumental** for music without vocals
+7. Execute the node
+
+The output will be a binary MP3 file. Use descriptive style terms rather than artist names for best results.
 
 ### AI Agent Integration
 
