@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-pollinations-ai",
   "version": "1.3.1",
-  "description": "n8n community node for Pollinations AI - image generation and chat models",
+  "description": "n8n community node for Pollinations AI - image, text, speech and music generation",
   "keywords": [
     "n8n-community-node-package",
     "n8n",
@@ -11,7 +11,11 @@
     "flux",
     "chat-model",
     "llm",
-    "langchain"
+    "langchain",
+    "audio",
+    "tts",
+    "speech",
+    "music"
   ],
   "license": "MIT",
   "homepage": "https://github.com/new-xmon-df/n8n-nodes-pollinations-ai",

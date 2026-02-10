@@ -34,6 +34,12 @@ function handlePollinationsError(
 				'Authentication failed. Please check your API key is valid.',
 				{ itemIndex },
 			);
+		case 402:
+			throw new NodeOperationError(
+				node,
+				'Pollen balance exhausted. Please add more Pollen at https://enter.pollinations.ai',
+				{ itemIndex },
+			);
 		case 403:
 			if (context === 'balance') {
 				throw new NodeOperationError(
@@ -107,7 +113,7 @@ export class Pollinations implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
-		description: 'Generate images and text using Pollinations AI',
+		description: 'Generate images, text, speech and music using Pollinations AI',
 		defaults: {
 			name: 'Pollinations',
 		},
@@ -134,16 +140,28 @@ export class Pollinations implements INodeType {
 						action: 'Generate an image from a text prompt',
 					},
 					{
-						name: 'Generate with Reference',
-						value: 'generateImageWithReference',
-						description: 'Generate an image using a reference image',
-						action: 'Generate an image using a reference image',
+						name: 'Generate Music',
+						value: 'generateMusic',
+						description: 'Generate music from a text prompt',
+						action: 'Generate music from a text prompt',
+					},
+					{
+						name: 'Generate Speech',
+						value: 'generateSpeech',
+						description: 'Convert text to speech using TTS',
+						action: 'Convert text to speech',
 					},
 					{
 						name: 'Generate Text',
 						value: 'generateText',
 						description: 'Generate text from a prompt using AI',
 						action: 'Generate text from a prompt',
+					},
+					{
+						name: 'Generate with Reference',
+						value: 'generateImageWithReference',
+						description: 'Generate an image using a reference image',
+						action: 'Generate an image using a reference image',
 					},
 					{
 						name: 'Get Balance',
@@ -514,6 +532,198 @@ export class Pollinations implements INodeType {
 					},
 				],
 			},
+
+			// ==================== GENERATE SPEECH ====================
+
+			// Text (Speech)
+			{
+				displayName: 'Text',
+				name: 'speechText',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['generateSpeech'],
+					},
+				},
+				description: 'The text to convert to speech',
+				typeOptions: {
+					rows: 4,
+				},
+			},
+
+			// Model (Speech) - Dynamic loading
+			{
+				displayName: 'Model Name or ID',
+				name: 'speechModel',
+				type: 'options',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['generateSpeech'],
+					},
+				},
+				typeOptions: {
+					loadOptionsMethod: 'getAudioTTSModels',
+				},
+				description: 'The TTS model to use for speech generation. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+			},
+
+			// Voice (Speech) - Dynamic loading
+			{
+				displayName: 'Voice Name or ID',
+				name: 'voice',
+				type: 'options',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['generateSpeech'],
+					},
+				},
+				typeOptions: {
+					loadOptionsMethod: 'getTTSVoices',
+				},
+				description: 'The voice to use for speech synthesis. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+			},
+
+			// Advanced Options (Speech)
+			{
+				displayName: 'Options',
+				name: 'speechOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						operation: ['generateSpeech'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Minimum Balance',
+						name: 'minimumBalance',
+						type: 'number',
+						default: 0,
+						description:
+							'Minimum pollen balance required to execute. Set to 0 to disable check.',
+						typeOptions: {
+							minValue: 0,
+						},
+					},
+					{
+						displayName: 'Response Format',
+						name: 'responseFormat',
+						type: 'options',
+						default: 'mp3',
+						options: [
+							{ name: 'AAC', value: 'aac' },
+							{ name: 'FLAC', value: 'flac' },
+							{ name: 'MP3', value: 'mp3' },
+							{ name: 'Opus', value: 'opus' },
+							{ name: 'PCM', value: 'pcm' },
+							{ name: 'WAV', value: 'wav' },
+						],
+						description: 'The audio format of the output file',
+					},
+				],
+			},
+
+			// ==================== GENERATE MUSIC ====================
+
+			// Prompt (Music)
+			{
+				displayName: 'Prompt',
+				name: 'musicPrompt',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['generateMusic'],
+					},
+				},
+				description: 'Description of the music to generate',
+				typeOptions: {
+					rows: 4,
+				},
+			},
+
+			// Model (Music) - Dynamic loading
+			{
+				displayName: 'Model Name or ID',
+				name: 'musicModel',
+				type: 'options',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['generateMusic'],
+					},
+				},
+				typeOptions: {
+					loadOptionsMethod: 'getAudioMusicModels',
+				},
+				description: 'The model to use for music generation. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+			},
+
+			// Duration (Music)
+			{
+				displayName: 'Duration (Seconds)',
+				name: 'duration',
+				type: 'number',
+				default: 30,
+				displayOptions: {
+					show: {
+						operation: ['generateMusic'],
+					},
+				},
+				description: 'Duration of the generated music in seconds',
+				typeOptions: {
+					minValue: 3,
+					maxValue: 300,
+				},
+			},
+
+			// Instrumental (Music)
+			{
+				displayName: 'Instrumental',
+				name: 'instrumental',
+				type: 'boolean',
+				default: false,
+				displayOptions: {
+					show: {
+						operation: ['generateMusic'],
+					},
+				},
+				description: 'Whether to generate instrumental music only (no vocals)',
+			},
+
+			// Advanced Options (Music)
+			{
+				displayName: 'Options',
+				name: 'musicOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						operation: ['generateMusic'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Minimum Balance',
+						name: 'minimumBalance',
+						type: 'number',
+						default: 0,
+						description:
+							'Minimum pollen balance required to execute. Set to 0 to disable check.',
+						typeOptions: {
+							minValue: 0,
+						},
+					},
+				],
+			},
 		],
 		usableAsTool: true,
 	};
@@ -546,6 +756,7 @@ export class Pollinations implements INodeType {
 								name: string;
 								description: string;
 								pricing?: { completionImageTokens?: number };
+								paid_only?: boolean;
 							}) => {
 								let displayName = model.description || model.name;
 
@@ -553,6 +764,10 @@ export class Pollinations implements INodeType {
 								if (model.pricing?.completionImageTokens) {
 									const imagesPerPollen = Math.floor(1 / model.pricing.completionImageTokens);
 									displayName += ` (~${imagesPerPollen.toLocaleString()} img/$)`;
+								}
+
+								if (model.paid_only) {
+									displayName += ' [Paid]';
 								}
 
 								return {
@@ -568,10 +783,10 @@ export class Pollinations implements INodeType {
 						{ name: 'Flux Schnell', value: 'flux' },
 						{ name: 'SDXL Turbo', value: 'turbo' },
 						{ name: 'GPT Image 1 Mini', value: 'gptimage' },
-						{ name: 'FLUX.1 Kontext', value: 'kontext' },
-						{ name: 'Seedream 4.0', value: 'seedream' },
-						{ name: 'NanoBanana', value: 'nanobanana' },
-						{ name: 'NanoBanana Pro', value: 'nanobanana-pro' },
+						{ name: 'FLUX.1 Kontext [Paid]', value: 'kontext' },
+						{ name: 'Seedream 4.0 [Paid]', value: 'seedream' },
+						{ name: 'NanoBanana [Paid]', value: 'nanobanana' },
+						{ name: 'NanoBanana Pro [Paid]', value: 'nanobanana-pro' },
 					];
 				} catch {
 					// Fallback if API fails
@@ -579,8 +794,8 @@ export class Pollinations implements INodeType {
 						{ name: 'Flux Schnell', value: 'flux' },
 						{ name: 'SDXL Turbo', value: 'turbo' },
 						{ name: 'GPT Image 1 Mini', value: 'gptimage' },
-						{ name: 'FLUX.1 Kontext', value: 'kontext' },
-						{ name: 'Seedream 4.0', value: 'seedream' },
+						{ name: 'FLUX.1 Kontext [Paid]', value: 'kontext' },
+						{ name: 'Seedream 4.0 [Paid]', value: 'seedream' },
 					];
 				}
 			},
@@ -612,6 +827,7 @@ export class Pollinations implements INodeType {
 								name: string;
 								description: string;
 								pricing?: { completionTextTokens?: number };
+								paid_only?: boolean;
 							}) => {
 								let displayName = model.description || model.name;
 
@@ -619,6 +835,10 @@ export class Pollinations implements INodeType {
 								if (model.pricing?.completionTextTokens) {
 									const responsesPerPollen = Math.floor(1 / model.pricing.completionTextTokens);
 									displayName += ` (~${responsesPerPollen.toLocaleString()} resp/$)`;
+								}
+
+								if (model.paid_only) {
+									displayName += ' [Paid]';
 								}
 
 								return {
@@ -634,15 +854,15 @@ export class Pollinations implements INodeType {
 						{ name: 'OpenAI GPT-4o Mini', value: 'openai' },
 						{ name: 'OpenAI GPT-4o Mini (Fast)', value: 'openai-fast' },
 						{ name: 'OpenAI GPT-4o (Large)', value: 'openai-large' },
-						{ name: 'Claude Sonnet 3.5', value: 'claude' },
+						{ name: 'Claude Sonnet 3.5 [Paid]', value: 'claude' },
 						{ name: 'Claude (Fast)', value: 'claude-fast' },
-						{ name: 'Claude (Large)', value: 'claude-large' },
-						{ name: 'Gemini', value: 'gemini' },
+						{ name: 'Claude (Large) [Paid]', value: 'claude-large' },
+						{ name: 'Gemini [Paid]', value: 'gemini' },
 						{ name: 'Gemini (Fast)', value: 'gemini-fast' },
-						{ name: 'Gemini (Large)', value: 'gemini-large' },
+						{ name: 'Gemini (Large) [Paid]', value: 'gemini-large' },
 						{ name: 'DeepSeek V3', value: 'deepseek' },
 						{ name: 'Mistral', value: 'mistral' },
-						{ name: 'Grok', value: 'grok' },
+						{ name: 'Grok [Paid]', value: 'grok' },
 					];
 				} catch {
 					// Fallback if API fails
@@ -650,7 +870,7 @@ export class Pollinations implements INodeType {
 						{ name: 'OpenAI GPT-4o Mini', value: 'openai' },
 						{ name: 'OpenAI GPT-4o Mini (Fast)', value: 'openai-fast' },
 						{ name: 'OpenAI GPT-4o (Large)', value: 'openai-large' },
-						{ name: 'Claude Sonnet 3.5', value: 'claude' },
+						{ name: 'Claude Sonnet 3.5 [Paid]', value: 'claude' },
 						{ name: 'Mistral', value: 'mistral' },
 						{ name: 'DeepSeek V3', value: 'deepseek' },
 					];
@@ -686,6 +906,7 @@ export class Pollinations implements INodeType {
 								name: string;
 								description: string;
 								pricing?: { completionImageTokens?: number };
+								paid_only?: boolean;
 							}) => {
 								let displayName = model.description || model.name;
 
@@ -693,6 +914,10 @@ export class Pollinations implements INodeType {
 								if (model.pricing?.completionImageTokens) {
 									const imagesPerPollen = Math.floor(1 / model.pricing.completionImageTokens);
 									displayName += ` (~${imagesPerPollen.toLocaleString()} img/$)`;
+								}
+
+								if (model.paid_only) {
+									displayName += ' [Paid]';
 								}
 
 								return {
@@ -705,21 +930,196 @@ export class Pollinations implements INodeType {
 
 					// Fallback if API fails
 					return [
-						{ name: 'FLUX.1 Kontext', value: 'kontext' },
-						{ name: 'NanoBanana', value: 'nanobanana' },
-						{ name: 'NanoBanana Pro', value: 'nanobanana-pro' },
-						{ name: 'Seedream 4.0', value: 'seedream' },
+						{ name: 'FLUX.1 Kontext [Paid]', value: 'kontext' },
+						{ name: 'NanoBanana [Paid]', value: 'nanobanana' },
+						{ name: 'NanoBanana Pro [Paid]', value: 'nanobanana-pro' },
+						{ name: 'Seedream 4.0 [Paid]', value: 'seedream' },
 						{ name: 'GPT Image 1 Mini', value: 'gptimage' },
 					];
 				} catch {
 					// Fallback if API fails
 					return [
-						{ name: 'FLUX.1 Kontext', value: 'kontext' },
-						{ name: 'NanoBanana', value: 'nanobanana' },
-						{ name: 'NanoBanana Pro', value: 'nanobanana-pro' },
-						{ name: 'Seedream 4.0', value: 'seedream' },
+						{ name: 'FLUX.1 Kontext [Paid]', value: 'kontext' },
+						{ name: 'NanoBanana [Paid]', value: 'nanobanana' },
+						{ name: 'NanoBanana Pro [Paid]', value: 'nanobanana-pro' },
+						{ name: 'Seedream 4.0 [Paid]', value: 'seedream' },
 						{ name: 'GPT Image 1 Mini', value: 'gptimage' },
 					];
+				}
+			},
+
+			async getAudioTTSModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				try {
+					const credentials = await this.getCredentials('pollinationsApi');
+					const apiKey = credentials.apiKey as string;
+
+					const response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: 'https://gen.pollinations.ai/audio/models',
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+					});
+
+					if (Array.isArray(response)) {
+						// Filter TTS models: audio output + has voices (distinguishes from music/STT)
+						const ttsModels = response.filter(
+							(model: { output_modalities?: string[]; voices?: string[] }) =>
+								model.output_modalities?.includes('audio') &&
+								Array.isArray(model.voices) &&
+								model.voices.length > 0,
+						);
+
+						return ttsModels.map(
+							(model: {
+								name: string;
+								description: string;
+								pricing?: { completionAudioTokens?: number };
+								paid_only?: boolean;
+							}) => {
+								let displayName = model.description || model.name;
+
+								if (model.pricing?.completionAudioTokens) {
+									const generationsPerPollen = Math.floor(
+										1 / model.pricing.completionAudioTokens,
+									);
+									displayName += ` (~${generationsPerPollen.toLocaleString()} gen/$)`;
+								}
+
+								if (model.paid_only) {
+									displayName += ' [Paid]';
+								}
+
+								return {
+									name: displayName,
+									value: model.name,
+								};
+							},
+						);
+					}
+
+					// Fallback if API fails
+					return [{ name: 'ElevenLabs TTS', value: 'elevenlabs' }];
+				} catch {
+					return [{ name: 'ElevenLabs TTS', value: 'elevenlabs' }];
+				}
+			},
+
+			async getTTSVoices(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				try {
+					const credentials = await this.getCredentials('pollinationsApi');
+					const apiKey = credentials.apiKey as string;
+
+					const response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: 'https://gen.pollinations.ai/audio/models',
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+					});
+
+					if (Array.isArray(response)) {
+						// Collect unique voices from all TTS models
+						const voiceSet = new Set<string>();
+						for (const model of response) {
+							if (
+								Array.isArray(model.voices) &&
+								model.output_modalities?.includes('audio')
+							) {
+								for (const voice of model.voices) {
+									voiceSet.add(voice as string);
+								}
+							}
+						}
+
+						const voices = Array.from(voiceSet).sort();
+						return voices.map((voice) => ({
+							name: voice.charAt(0).toUpperCase() + voice.slice(1),
+							value: voice,
+						}));
+					}
+
+					// Fallback
+					return [
+						{ name: 'Alloy', value: 'alloy' },
+						{ name: 'Echo', value: 'echo' },
+						{ name: 'Fable', value: 'fable' },
+						{ name: 'Nova', value: 'nova' },
+						{ name: 'Onyx', value: 'onyx' },
+						{ name: 'Shimmer', value: 'shimmer' },
+					];
+				} catch {
+					return [
+						{ name: 'Alloy', value: 'alloy' },
+						{ name: 'Echo', value: 'echo' },
+						{ name: 'Fable', value: 'fable' },
+						{ name: 'Nova', value: 'nova' },
+						{ name: 'Onyx', value: 'onyx' },
+						{ name: 'Shimmer', value: 'shimmer' },
+					];
+				}
+			},
+
+			async getAudioMusicModels(
+				this: ILoadOptionsFunctions,
+			): Promise<INodePropertyOptions[]> {
+				try {
+					const credentials = await this.getCredentials('pollinationsApi');
+					const apiKey = credentials.apiKey as string;
+
+					const response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: 'https://gen.pollinations.ai/audio/models',
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+					});
+
+					if (Array.isArray(response)) {
+						// Filter music models: audio output, no voices (not TTS), no audio input (not STT)
+						const musicModels = response.filter(
+							(model: {
+								output_modalities?: string[];
+								input_modalities?: string[];
+								voices?: string[];
+							}) =>
+								model.output_modalities?.includes('audio') &&
+								(!Array.isArray(model.voices) || model.voices.length === 0) &&
+								!model.input_modalities?.includes('audio'),
+						);
+
+						return musicModels.map(
+							(model: {
+								name: string;
+								description: string;
+								pricing?: { completionAudioTokens?: number };
+								paid_only?: boolean;
+							}) => {
+								let displayName = model.description || model.name;
+
+								if (model.pricing?.completionAudioTokens) {
+									const generationsPerPollen = Math.floor(
+										1 / model.pricing.completionAudioTokens,
+									);
+									displayName += ` (~${generationsPerPollen.toLocaleString()} gen/$)`;
+								}
+
+								if (model.paid_only) {
+									displayName += ' [Paid]';
+								}
+
+								return {
+									name: displayName,
+									value: model.name,
+								};
+							},
+						);
+					}
+
+					// Fallback if API fails
+					return [{ name: 'ElevenLabs Music', value: 'elevenmusic' }];
+				} catch {
+					return [{ name: 'ElevenLabs Music', value: 'elevenmusic' }];
 				}
 			},
 		},
@@ -1078,6 +1478,193 @@ export class Pollinations implements INodeType {
 					response: {
 						statusCode: response.statusCode,
 						contentType: response.headers?.['content-type'] || 'image/png',
+						contentLength: response.headers?.['content-length'] || null,
+						duration: `${duration}ms`,
+					},
+					timestamp: new Date().toISOString(),
+				};
+
+				returnData.push({
+					json: metadata,
+					binary: {
+						data: binaryData,
+					},
+				});
+			}
+
+			if (operation === 'generateSpeech') {
+				const text = this.getNodeParameter('speechText', i) as string;
+				const model = this.getNodeParameter('speechModel', i) as string;
+				const voice = this.getNodeParameter('voice', i) as string;
+				const speechOptions = this.getNodeParameter('speechOptions', i, {}) as {
+					responseFormat?: string;
+					minimumBalance?: number;
+				};
+
+				// Check minimum balance if configured
+				const minimumBalance = speechOptions.minimumBalance || 0;
+				await checkMinimumBalance(this, minimumBalance, i);
+
+				// Get credentials
+				const credentials = await this.getCredentials('pollinationsApi');
+				const apiKey = credentials.apiKey as string;
+
+				// Build query parameters
+				const responseFormat = speechOptions.responseFormat || 'mp3';
+				const queryParams: Record<string, string> = {
+					model,
+					voice,
+					response_format: responseFormat,
+				};
+
+				// Build the URL
+				const baseUrl = 'https://gen.pollinations.ai/audio';
+				const encodedText = encodeURIComponent(text);
+				const queryString = new URLSearchParams(queryParams).toString();
+				const fullUrl = `${baseUrl}/${encodedText}?${queryString}`;
+
+				// Record start time
+				const startTime = Date.now();
+
+				// Make the request
+				let response;
+				try {
+					response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: fullUrl,
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+						encoding: 'arraybuffer',
+						returnFullResponse: true,
+					});
+				} catch (error: unknown) {
+					handlePollinationsError(error, this.getNode(), i, 'audio');
+				}
+
+				// Calculate duration
+				const duration = Date.now() - startTime;
+
+				// MIME type mapping
+				const mimeTypes: Record<string, string> = {
+					mp3: 'audio/mpeg',
+					opus: 'audio/opus',
+					aac: 'audio/aac',
+					flac: 'audio/flac',
+					wav: 'audio/wav',
+					pcm: 'audio/pcm',
+				};
+
+				const mimeType = mimeTypes[responseFormat] || 'audio/mpeg';
+				const extension = responseFormat === 'mp3' ? 'mp3' : responseFormat;
+
+				// Prepare binary data
+				const binaryData = await this.helpers.prepareBinaryData(
+					Buffer.from(response.body as ArrayBuffer),
+					`speech.${extension}`,
+					mimeType,
+				);
+
+				// Build metadata
+				const metadata = {
+					request: {
+						url: fullUrl,
+						text,
+						model,
+						voice,
+						responseFormat,
+					},
+					response: {
+						statusCode: response.statusCode,
+						contentType: response.headers?.['content-type'] || mimeType,
+						contentLength: response.headers?.['content-length'] || null,
+						duration: `${duration}ms`,
+					},
+					timestamp: new Date().toISOString(),
+				};
+
+				returnData.push({
+					json: metadata,
+					binary: {
+						data: binaryData,
+					},
+				});
+			}
+
+			if (operation === 'generateMusic') {
+				const prompt = this.getNodeParameter('musicPrompt', i) as string;
+				const model = this.getNodeParameter('musicModel', i) as string;
+				const musicDuration = this.getNodeParameter('duration', i) as number;
+				const instrumental = this.getNodeParameter('instrumental', i) as boolean;
+				const musicOptions = this.getNodeParameter('musicOptions', i, {}) as {
+					minimumBalance?: number;
+				};
+
+				// Check minimum balance if configured
+				const minimumBalance = musicOptions.minimumBalance || 0;
+				await checkMinimumBalance(this, minimumBalance, i);
+
+				// Get credentials
+				const credentials = await this.getCredentials('pollinationsApi');
+				const apiKey = credentials.apiKey as string;
+
+				// Build query parameters
+				const queryParams: Record<string, string> = {
+					model,
+					duration: musicDuration.toString(),
+				};
+
+				if (instrumental) {
+					queryParams.instrumental = 'true';
+				}
+
+				// Build the URL
+				const baseUrl = 'https://gen.pollinations.ai/audio';
+				const encodedPrompt = encodeURIComponent(prompt);
+				const queryString = new URLSearchParams(queryParams).toString();
+				const fullUrl = `${baseUrl}/${encodedPrompt}?${queryString}`;
+
+				// Record start time
+				const startTime = Date.now();
+
+				// Make the request
+				let response;
+				try {
+					response = await this.helpers.httpRequest({
+						method: 'GET',
+						url: fullUrl,
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+						},
+						encoding: 'arraybuffer',
+						returnFullResponse: true,
+					});
+				} catch (error: unknown) {
+					handlePollinationsError(error, this.getNode(), i, 'audio');
+				}
+
+				// Calculate duration
+				const duration = Date.now() - startTime;
+
+				// Prepare binary data
+				const binaryData = await this.helpers.prepareBinaryData(
+					Buffer.from(response.body as ArrayBuffer),
+					'music.mp3',
+					'audio/mpeg',
+				);
+
+				// Build metadata
+				const metadata = {
+					request: {
+						url: fullUrl,
+						prompt,
+						model,
+						duration: musicDuration,
+						instrumental,
+					},
+					response: {
+						statusCode: response.statusCode,
+						contentType: response.headers?.['content-type'] || 'audio/mpeg',
 						contentLength: response.headers?.['content-length'] || null,
 						duration: `${duration}ms`,
 					},
